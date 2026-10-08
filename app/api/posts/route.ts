@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (contentType.includes("application/json")) {
       const body = await req.json();
 
-      // Upvote
+      // Upvote တိုးခြင်း
       if (body.action === "upvote") {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
           method: "PATCH",
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: updateRes.ok });
       }
 
-      // View increment
+      // View တိုးခြင်း
       if (body.action === "incrementView") {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
           method: "PATCH",
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: updateRes.ok });
       }
 
-      // Comment
+      // Comment တင်ခြင်း
       if (body.action === "comment") {
         const commentRes = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
           method: "POST",
@@ -80,28 +80,13 @@ export async function POST(req: Request) {
     let imageUrl = "";
 
     if (file && file.size > 0) {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const arrayBuffer = await file.arrayBuffer();
-
-      const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/posts/${fileName}`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          "Content-Type": file.type || "image/jpeg",
-          "x-upsert": "true",
-        },
-        body: Buffer.from(arrayBuffer),
-      });
-
-      if (uploadRes.ok) {
-        imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
-      } else {
-        // Fallback Base64 string if storage fails
-        const base64 = Buffer.from(arrayBuffer).toString("base64");
-        imageUrl = `data:${file.type || "image/jpeg"};base64,${base64}`;
-      }
+      const buffer = Buffer.from(arrayBuffer);
+      
+      // ပုံသေချာပေါ်စေရန် Base64 format သို့ တိုက်ရိုက်ပြောင်းပေးခြင်း
+      const base64Image = buffer.toString("base64");
+      const mimeType = file.type || "image/jpeg";
+      imageUrl = `data:${mimeType};base64,${base64Image}`;
     }
 
     const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
@@ -117,7 +102,7 @@ export async function POST(req: Request) {
         content,
         image_url: imageUrl || null,
         upvotes: 0,
-        views: 0, // 0 ကနေ စပါမည်
+        views: 0,
       }),
     });
 
