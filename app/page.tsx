@@ -49,7 +49,7 @@ export default function Home() {
         setContent("");
         setFile(null);
         if (fileInputRef.current) {
-          fileInputRef.current.value = ""; // Choose File ကို ပြန်ရှင်းမည်
+          fileInputRef.current.value = "";
         }
         await fetchPosts();
       }
@@ -152,7 +152,7 @@ export default function Home() {
         </button>
       </form>
 
-      {/* English Header */}
+      {/* Recent Posts Header */}
       <h2 style={{ marginTop: "30px", fontSize: "20px", color: "#333" }}>Recent Posts</h2>
 
       {posts.length === 0 ? (
@@ -176,21 +176,22 @@ export default function Home() {
                     {post.views || 0} views
                   </span>
                   
+                  {/* Upvote Button (မြား/တြိဂံ ဖြုတ်ထားသည်) */}
                   <button
                     onClick={() => handleUpvote(post.id, post.upvotes || 0)}
-                    style={{ background: "#e6f0ff", color: "#0070f3", border: "none", padding: "5px 10px", borderRadius: "15px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}
+                    style={{ background: "#e6f0ff", color: "#0070f3", border: "none", padding: "5px 12px", borderRadius: "15px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
                   >
-                    ▲ {post.upvotes || 0}
+                    {post.upvotes || 0}
                   </button>
                 </div>
               </div>
 
-              {/* ပုံ */}
+              {/* ပုံ ပေါ်စေရန် */}
               {post.image_url && (
                 <div style={{ marginTop: "10px" }}>
                   <img
                     src={post.image_url}
-                    alt="Post attachment"
+                    alt={post.title || "Post image"}
                     style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "8px" }}
                   />
                 </div>
