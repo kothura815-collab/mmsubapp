@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
 
-// Post များ နှင့် Comments များကို ဆွဲယူရန် API
 export async function GET() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*,comments(*)&order=id.desc`, {
@@ -19,7 +18,6 @@ export async function GET() {
   }
 }
 
-// Upvote, View, Comment, Post သစ်များအတွက် API
 export async function POST(req: Request) {
   try {
     const contentType = req.headers.get("content-type") || "";
@@ -27,7 +25,7 @@ export async function POST(req: Request) {
     if (contentType.includes("application/json")) {
       const body = await req.json();
 
-      // 1. Upvote တိုးခြင်း
+      // Upvote
       if (body.action === "upvote") {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
           method: "PATCH",
@@ -41,7 +39,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: updateRes.ok });
       }
 
-      // 2. View Count တိုးခြင်း
+      // View increment
       if (body.action === "incrementView") {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
           method: "PATCH",
@@ -50,12 +48,12 @@ export async function POST(req: Request) {
             Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ views: (body.currentViews || 100) + 1 }),
+          body: JSON.stringify({ views: (body.currentViews || 0) + 1 }),
         });
         return NextResponse.json({ success: updateRes.ok });
       }
 
-      // 3. Comment တင်ခြင်း
+      // Comment
       if (body.action === "comment") {
         const commentRes = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
           method: "POST",
@@ -83,7 +81,7 @@ export async function POST(req: Request) {
 
     if (file && file.size > 0) {
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const arrayBuffer = await file.arrayBuffer();
 
       const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/posts/${fileName}`, {
@@ -99,6 +97,10 @@ export async function POST(req: Request) {
 
       if (uploadRes.ok) {
         imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
+      } else {
+        // Fallback Base64 string if storage fails
+        const base64 = Buffer.from(arrayBuffer).toString("base64");
+        imageUrl = `data:${file.type || "image/jpeg"};base64,${base64}`;
       }
     }
 
@@ -115,7 +117,7 @@ export async function POST(req: Request) {
         content,
         image_url: imageUrl || null,
         upvotes: 0,
-        views: 100,
+        views: 0, // 0 ကနေ စပါမည်
       }),
     });
 
@@ -124,4 +126,4 @@ export async function POST(req: Request) {
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 });
   }
-      }
+}
