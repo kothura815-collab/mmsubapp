@@ -40,7 +40,7 @@ export default function Home() {
     try {
       let imageUrl = "";
 
-      // ၁။ ဓာတ်ပုံပါပါက Storage သို့ Upload လုပ်မည်
+      // ၁။ ဓာတ်ပုံပါပါက Upload လုပ်မည်
       if (file) {
         const fileExt = file.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
@@ -51,12 +51,16 @@ export default function Home() {
             apikey: SUPABASE_ANON_KEY,
             Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             "Content-Type": file.type || "image/jpeg",
+            "x-upsert": "true",
           },
           body: file,
         });
 
         if (uploadRes.ok) {
           imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
+        } else {
+          const uploadErr = await uploadRes.json();
+          console.warn("Upload Warning:", uploadErr);
         }
       }
 
@@ -70,8 +74,8 @@ export default function Home() {
           Prefer: "return=representation",
         },
         body: JSON.stringify({
-          title,
-          content,
+          title: title,
+          content: content,
           image_url: imageUrl || null,
         }),
       });
