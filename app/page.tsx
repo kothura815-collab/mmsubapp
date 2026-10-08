@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -13,17 +12,14 @@ export default function Home() {
   // Post များ ဆွဲယူရန်
   const fetchPosts = async () => {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=id.desc`, {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      });
+      const res = await fetch("/api/posts");
       if (res.ok) {
         const data = await res.json();
-        setPosts(data || []);
+        if (Array.isArray(data)) {
+          setPosts(data);
+        }
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fetch Error:", err);
     }
   };
@@ -38,61 +34,31 @@ export default function Home() {
     setLoading(true);
 
     try {
-      let imageUrl = "";
-
-      // ၁။ ဓာတ်ပုံပါပါက Upload လုပ်မည်
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
       if (file) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-
-        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/posts/${fileName}`, {
-          method: "POST",
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": file.type || "image/jpeg",
-            "x-upsert": "true",
-          },
-          body: file,
-        });
-
-        if (uploadRes.ok) {
-          imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
-        } else {
-          const uploadErr = await uploadRes.json();
-          console.warn("Upload Warning:", uploadErr);
-        }
+        formData.append("file", file);
       }
 
-      // ၂။ Database ထဲသို့ Post ထည့်မည်
-      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
+      const res = await fetch("/api/posts", {
         method: "POST",
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=representation",
-        },
-        body: JSON.stringify({
-          title: title,
-          content: content,
-          image_url: imageUrl || null,
-        }),
+        body: formData,
       });
 
-      const responseData = await insertRes.json();
+      const data = await res.json();
 
-      if (!insertRes.ok) {
-        throw new Error(responseData.message || responseData.error || JSON.stringify(responseData));
+      if (!res.ok) {
+        throw new Error(data.error || "Post တင်ခြင်း မအောင်မြင်ပါ");
       }
 
       setTitle("");
       setContent("");
       setFile(null);
       await fetchPosts();
-      alert("Post အောင်မြင်စွာ တင်ပြီးပါပြီ!");
+      alert("Post အောင်မြင်စွာ တက်သွားပါပြီ!");
     } catch (err: any) {
-      alert("Error Details: " + (err.message || err));
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
