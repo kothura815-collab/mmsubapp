@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-interface Post {
+interface post {
   id: string;
   title: string;
   content: string;
@@ -12,7 +12,7 @@ interface Post {
 }
 
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setposts] = useState<Post[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -77,7 +77,7 @@ export default function Home() {
       <h1 style={{ textAlign: "center" }}>MM Sub App</h1>
       
       <form onSubmit={handleCreatePost} style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "30px", background: "#fff", padding: "20px", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
-        <h3>Post အသစ်ဖန်တီးရန်</h3>
+        <h3>post အသစ်ဖန်တီးရန်</h3>
         <input
           type="text"
           placeholder="ခေါင်းစဉ်"
@@ -102,14 +102,14 @@ export default function Home() {
           disabled={loading}
           style={{ padding: "10px", background: "#0070f3", color: "#fff", border: "none", borderRadius: "4px", cursor: "pointer" }}
         >
-          {loading ? "တင်နေသည်..." : "Post တင်မည်"}
+          {loading ? "တင်နေသည်..." : "post တင်မည်"}
         </button>
       </form>
 
-      <h2>Post များ စာရင်း</h2>
+      <h2>post များ စာရင်း</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
         {posts.length === 0 ? (
-          <p>Post များ မရှိသေးပါ...</p>
+          <p>post များ မရှိသေးပါ...</p>
         ) : (
           posts.map((post) => (
             <div key={post.id} style={{ background: "#fff", padding: "15px", borderRadius: "8px", border: "1px solid #eee" }}>
