@@ -30,6 +30,13 @@ export default function Home() {
 
   useEffect(() => {
     fetchPosts();
+
+    // ၃ စက္ကန့်တိုင်း အလိုအလျောက် Views နှင့် Post များကို ဖြည်းဖြည်းချင်း Update လုပ်ပေးခြင်း
+    const interval = setInterval(() => {
+      fetchPosts();
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Post တင်ခြင်း
@@ -60,17 +67,7 @@ export default function Home() {
     }
   };
 
-  // Upvote
-  const handleUpvote = async (postId: number, currentUpvotes: number) => {
-    await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "upvote", postId, currentUpvotes }),
-    });
-    fetchPosts();
-  };
-
-  // Views တိုးခြင်း
+  // See More / See Less နှိပ်ချိန် View တိုးခြင်း
   const handleToggleExpand = async (postId: number, currentViews: number) => {
     const isCurrentlyExpanded = expandedPosts[postId];
     setExpandedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
@@ -171,22 +168,15 @@ export default function Home() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "bold" }}>{post.title}</h3>
                 
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "12px", color: "#666", background: "#f0f2f5", padding: "4px 8px", borderRadius: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  {/* Views သီးသန့်ပြသခြင်း (Upvote ခလုတ် လုံးဝ မပါတော့ပါ) */}
+                  <span style={{ fontSize: "12px", color: "#666", background: "#f0f2f5", padding: "4px 10px", borderRadius: "12px" }}>
                     {post.views || 0} views
                   </span>
-                  
-                  {/* Upvote Button (မြား/တြိဂံ ဖြုတ်ထားသည်) */}
-                  <button
-                    onClick={() => handleUpvote(post.id, post.upvotes || 0)}
-                    style={{ background: "#e6f0ff", color: "#0070f3", border: "none", padding: "5px 12px", borderRadius: "15px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
-                  >
-                    {post.upvotes || 0}
-                  </button>
                 </div>
               </div>
 
-              {/* ပုံ ပေါ်စေရန် */}
+              {/* ပုံ */}
               {post.image_url && (
                 <div style={{ marginTop: "10px" }}>
                   <img
@@ -284,4 +274,4 @@ export default function Home() {
 
     </div>
   );
-                           }
+}
