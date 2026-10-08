@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
 
-// Post များ ဆွဲယူရန် API
+// Post များ ဆွဲယူရန်
 export async function GET() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=id.desc`, {
@@ -19,7 +19,7 @@ export async function GET() {
   }
 }
 
-// Post အသစ် တင်ရန် API
+// Post အသစ် တင်ရန်
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -29,7 +29,6 @@ export async function POST(req: Request) {
 
     let imageUrl = "";
 
-    // ၁။ ဓာတ်ပုံပါပါက Server ဘက်မှ Supabase Storage သို့ Upload လုပ်မည်
     if (file && file.size > 0) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -41,16 +40,19 @@ export async function POST(req: Request) {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           "Content-Type": file.type || "image/jpeg",
+          "x-upsert": "true",
         },
         body: Buffer.from(arrayBuffer),
       });
 
       if (uploadRes.ok) {
         imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
+      } else {
+        const uploadErr = await uploadRes.json();
+        console.error("Upload error details:", uploadErr);
       }
     }
 
-    // ၂။ Server ဘက်မှ Supabase Database ထဲသို့ Post ထည့်မည်
     const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
       method: "POST",
       headers: {
@@ -78,5 +80,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, data: resultData });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 });
+  }
+}
+
+// Post ဖျက်ရန် (DELETE API)
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Post ID မရှိပါ" }, { status: 400 });
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${id}`, {
+      method: "DELETE",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errData = await res.json();
+      return NextResponse.json({ error: errData.message || "Delete မရပါ" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
