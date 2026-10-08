@@ -9,15 +9,11 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // See More ကြည့်ထားသော Post ID များ
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
-  
-  // Comments ပိတ်/ဖွင့် မှတ်ထားရန် State
   const [showComments, setShowComments] = useState<{ [key: number]: boolean }>({});
-  
-  // Comment ရေးသားရန် Input State
   const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
   const fetchPosts = async () => {
@@ -52,6 +48,9 @@ export default function Home() {
         setTitle("");
         setContent("");
         setFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""; // Choose File ကို ပြန်ရှင်းပစ်မည်
+        }
         await fetchPosts();
       }
     } catch (err: any) {
@@ -61,7 +60,7 @@ export default function Home() {
     }
   };
 
-  // Upvote တိုးခြင်း
+  // Upvote
   const handleUpvote = async (postId: number, currentUpvotes: number) => {
     await fetch("/api/posts", {
       method: "POST",
@@ -71,7 +70,7 @@ export default function Home() {
     fetchPosts();
   };
 
-  // View Count တိုးခြင်းနှင့် See More ဖွင့်ခြင်း
+  // Views သဘာဝအတိုင်း ဖြည်းဖြည်းချင်း တိုးခြင်း
   const handleToggleExpand = async (postId: number, currentViews: number) => {
     const isCurrentlyExpanded = expandedPosts[postId];
     setExpandedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
@@ -86,7 +85,7 @@ export default function Home() {
     }
   };
 
-  // Comments ပိတ်/ဖွင့် Toggle လုပ်ရန်
+  // Comment Toggle
   const toggleComments = (postId: number) => {
     setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
@@ -103,11 +102,10 @@ export default function Home() {
     });
 
     setCommentInputs({ ...commentInputs, [postId]: "" });
-    setShowComments((prev) => ({ ...prev, [postId]: true })); // comment တင်ပြီးရင် ဖွင့်ပြမည်
+    setShowComments((prev) => ({ ...prev, [postId]: true }));
     fetchPosts();
   };
 
-  // အပေါ်ဆုံးသို့ သွားရန် Function
   const scrollToTop = () => {
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -115,12 +113,11 @@ export default function Home() {
   return (
     <div style={{ maxWidth: "550px", margin: "20px auto", padding: "15px", fontFamily: "sans-serif", position: "relative" }}>
       
-      {/* Top Anchor */}
       <div ref={topRef}></div>
 
-      <h1 style={{ textAlign: "center" }}>MM Sub App</h1>
+      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>MM Sub App</h1>
 
-      {/* Post ဖန်တီးရန် Form */}
+      {/* Post Form */}
       <form onSubmit={handleSubmit} style={{ background: "#f8f9fa", padding: "15px", borderRadius: "10px", border: "1px solid #ddd" }}>
         <h3 style={{ margin: "0 0 10px 0" }}>Post အသစ်ဖန်တီးရန်</h3>
         <input
@@ -139,7 +136,13 @@ export default function Home() {
           rows={3}
           style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }}
         />
-        <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} style={{ marginBottom: "10px" }} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          style={{ marginBottom: "10px", width: "100%" }}
+        />
         <button
           type="submit"
           disabled={loading}
@@ -149,10 +152,11 @@ export default function Home() {
         </button>
       </form>
 
-      {/* Post စာရင်း */}
-      <h2 style={{ marginTop: "30px" }}>Post များ စာရင်း</h2>
+      {/* English Header */}
+      <h2 style={{ marginTop: "30px", fontSize: "20px", color: "#333" }}>Recent Posts</h2>
+
       {posts.length === 0 ? (
-        <p>Post များ မရှိသေးပါ...</p>
+        <p style={{ color: "#777" }}>No posts yet...</p>
       ) : (
         posts.map((post) => {
           const isExpanded = expandedPosts[post.id];
@@ -163,40 +167,43 @@ export default function Home() {
           return (
             <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "15px", marginTop: "15px", borderRadius: "10px", background: "#fff", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}>
               
-              {/* Title & Upvote & Views */}
+              {/* Title & Stats */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <h3 style={{ margin: 0, fontSize: "18px" }}>{post.title}</h3>
+                <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "bold" }}>{post.title}</h3>
                 
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {/* သန့်ရှင်းသော View Display (တြိဂံ/Icon မပါ) */}
                   <span style={{ fontSize: "12px", color: "#666", background: "#f0f2f5", padding: "4px 8px", borderRadius: "12px" }}>
-                    👁️ {post.views || 100} views
+                    {post.views || 0} views
                   </span>
+                  
+                  {/* Upvote */}
                   <button
                     onClick={() => handleUpvote(post.id, post.upvotes || 0)}
-                    style={{ display: "flex", alignItems: "center", gap: "4px", background: "#e6f0ff", color: "#0070f3", border: "none", padding: "6px 12px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold" }}
+                    style={{ background: "#e6f0ff", color: "#0070f3", border: "none", padding: "5px 10px", borderRadius: "15px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}
                   >
                     ▲ {post.upvotes || 0}
                   </button>
                 </div>
               </div>
 
-              {/* ပုံ */}
+              {/* ပုံ ပေါ်စေရန် */}
               {post.image_url && (
                 <div style={{ marginTop: "10px" }}>
                   <img
                     src={post.image_url}
-                    alt={post.title}
+                    alt="Post attachment"
                     style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "8px" }}
                   />
                 </div>
               )}
 
               {/* Content */}
-              <p style={{ color: "#333", marginTop: "10px", lineHeight: "1.5" }}>
+              <p style={{ color: "#333", marginTop: "10px", lineHeight: "1.5", fontSize: "14px" }}>
                 {displayContent}
                 {isLongText && (
                   <span
-                    onClick={() => handleToggleExpand(post.id, post.views || 100)}
+                    onClick={() => handleToggleExpand(post.id, post.views || 0)}
                     style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
                   >
                     {isExpanded ? "See less" : "See more"}
@@ -206,37 +213,35 @@ export default function Home() {
 
               <hr style={{ margin: "12px 0", border: "none", borderTop: "1px solid #eee" }} />
 
-              {/* Comment Toggle Header */}
+              {/* Comments Button (ကြည့်မည်/ချုံ့မည် မပါ) */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <button
                   onClick={() => toggleComments(post.id)}
-                  style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0, fontSize: "14px" }}
+                  style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0, fontSize: "13px" }}
                 >
-                  💬 Comments ({post.comments?.length || 0}) {isCommentsOpen ? "▲ (ချုံ့မည်)" : "▼ (ကြည့်မည်)"}
+                  💬 Comments ({post.comments?.length || 0})
                 </button>
               </div>
 
-              {/* Comments Section (Toggle အဖွင့်/အပိတ်) */}
+              {/* Comments Area */}
               {isCommentsOpen && (
                 <div style={{ marginTop: "10px" }}>
-                  {/* Comments List - ခွဲခြားပြသခြင်း */}
                   {post.comments && post.comments.length > 0 ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "10px" }}>
                       {post.comments.map((c: any) => (
-                        <div key={c.id} style={{ background: "#f8f9fa", padding: "10px", borderRadius: "8px", borderLeft: "3px solid #0070f3", fontSize: "13px", color: "#333" }}>
+                        <div key={c.id} style={{ background: "#f8f9fa", padding: "8px 12px", borderRadius: "6px", borderLeft: "3px solid #0070f3", fontSize: "13px", color: "#333" }}>
                           {c.content}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p style={{ fontSize: "12px", color: "#888", margin: "5px 0 10px 0" }}>Comment မရှိသေးပါ...</p>
+                    <p style={{ fontSize: "12px", color: "#888", margin: "5px 0 10px 0" }}>No comments yet...</p>
                   )}
 
-                  {/* Comment Input */}
                   <div style={{ display: "flex", gap: "5px" }}>
                     <input
                       type="text"
-                      placeholder="Comment ရေးရန်..."
+                      placeholder="Write a comment..."
                       value={commentInputs[post.id] || ""}
                       onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
                       style={{ flex: 1, padding: "8px", borderRadius: "5px", border: "1px solid #ccc", fontSize: "13px" }}
@@ -256,7 +261,7 @@ export default function Home() {
         })
       )}
 
-      {/* Floating Up Top Button */}
+      {/* Up Top Button */}
       <button
         onClick={scrollToTop}
         style={{
@@ -268,7 +273,7 @@ export default function Home() {
           border: "none",
           borderRadius: "50px",
           padding: "10px 16px",
-          fontSize: "14px",
+          fontSize: "13px",
           fontWeight: "bold",
           boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
           cursor: "pointer",
@@ -280,4 +285,4 @@ export default function Home() {
 
     </div>
   );
-          }
+  }
