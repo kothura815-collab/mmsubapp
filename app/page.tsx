@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -10,18 +10,21 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Post များ ဆွဲယူရန်
+  // Post များ ဆွဲယူရန် (REST API တိုက်ရိုက်ခေါ်နည်း)
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*")
-        .order("id", { ascending: false });
-
-      if (error) throw error;
-      setPosts(data || []);
-    } catch (err: any) {
-      console.error("Fetch Error:", err.message);
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=id.desc`, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPosts(data || []);
+      }
+    } catch (err) {
+      console.error("Fetch Error:", err);
     }
   };
 
@@ -29,7 +32,7 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  // Post သစ် တင်ရန်
+  // Post အသစ် တင်ရန်
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -37,34 +40,46 @@ export default function Home() {
     try {
       let imageUrl = "";
 
-      // ပုံပါရင် Storage သို့ Upload လုပ်မည်
+      // ၁။ ဓာတ်ပုံပါပါက Storage သို့ Upload လုပ်မည်
       if (file) {
         const fileExt = file.name.split(".").pop();
         const fileName = `${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from("posts")
-          .upload(fileName, file);
 
-        if (uploadError) {
-          console.error("Storage upload note:", uploadError.message);
-        } else {
-          const { data: publicUrlData } = supabase.storage
-            .from("posts")
-            .getPublicUrl(fileName);
-          imageUrl = publicUrlData.publicUrl;
+        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/posts/${fileName}`, {
+          method: "POST",
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            "Content-Type": file.type,
+          },
+          body: file,
+        });
+
+        if (uploadRes.ok) {
+          imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
         }
       }
 
-      // Database ထဲသို့ Post ထည့်မည်
-      const { error: insertError } = await supabase.from("posts").insert([
-        {
-          title,
-          content,
-          image_url: imageUrl || null,
+      // ၂။ Database ထဲသို့ Post တိုက်ရိုက် ထည့်မည်
+      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
+        method: "POST",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
         },
-      ]);
+        body: JSON.stringify({
+          title: title,
+          content: content,
+          image_url: imageUrl || null,
+        }),
+      });
 
-      if (insertError) throw insertError;
+      if (!insertRes.ok) {
+        const errorData = await insertRes.json();
+        throw new Error(errorData.message || "Post တင်ခြင်း မအောင်မြင်ပါ");
+      }
 
       setTitle("");
       setContent("");
@@ -72,7 +87,7 @@ export default function Home() {
       await fetchPosts();
       alert("Post အောင်မြင်စွာ တင်ပြီးပါပြီ!");
     } catch (err: any) {
-      alert("Error: " + (err.message || "Failed to fetch"));
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
