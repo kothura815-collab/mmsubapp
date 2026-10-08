@@ -10,7 +10,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Post များ ဆွဲယူရန် (REST API တိုက်ရိုက်ခေါ်နည်း)
+  // Post များ ဆွဲယူရန်
   const fetchPosts = async () => {
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=id.desc`, {
@@ -23,7 +23,7 @@ export default function Home() {
         const data = await res.json();
         setPosts(data || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Fetch Error:", err);
     }
   };
@@ -50,7 +50,7 @@ export default function Home() {
           headers: {
             apikey: SUPABASE_ANON_KEY,
             Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": file.type,
+            "Content-Type": file.type || "image/jpeg",
           },
           body: file,
         });
@@ -60,25 +60,26 @@ export default function Home() {
         }
       }
 
-      // ၂။ Database ထဲသို့ Post တိုက်ရိုက် ထည့်မည်
+      // ၂။ Database ထဲသို့ Post ထည့်မည်
       const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
         method: "POST",
         headers: {
           apikey: SUPABASE_ANON_KEY,
           Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
           "Content-Type": "application/json",
-          Prefer: "return=minimal",
+          Prefer: "return=representation",
         },
         body: JSON.stringify({
-          title: title,
-          content: content,
+          title,
+          content,
           image_url: imageUrl || null,
         }),
       });
 
+      const responseData = await insertRes.json();
+
       if (!insertRes.ok) {
-        const errorData = await insertRes.json();
-        throw new Error(errorData.message || "Post တင်ခြင်း မအောင်မြင်ပါ");
+        throw new Error(responseData.message || responseData.error || JSON.stringify(responseData));
       }
 
       setTitle("");
@@ -87,7 +88,7 @@ export default function Home() {
       await fetchPosts();
       alert("Post အောင်မြင်စွာ တင်ပြီးပါပြီ!");
     } catch (err: any) {
-      alert("Error: " + err.message);
+      alert("Error Details: " + (err.message || err));
     } finally {
       setLoading(false);
     }
