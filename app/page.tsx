@@ -2,56 +2,36 @@
 
 import { useState, useEffect } from "react";
 
-interface Comment {
-  id: number;
-  text: string;
-  createdAt: string;
-}
-
-interface Post {
-  id: number;
-  title: string;
-  content: string;
-  image_url?: string;
-  upvotes?: number;
-  comments?: Comment[];
-}
-
-export default function HomePage() {
-  const [posts, setPosts] = useState<Post[]>([]);
+export default function Home() {
+  const [posts, setPosts] = useState<any[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
+  
+  // See More ကြည့်ထားသော Post ID များကို မှတ်ထားရန်
+  const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
+  
+  // Comment ရေးသားရန် Input State
   const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  // Post များ ဆွဲယူရန်
   const fetchPosts = async () => {
     try {
       const res = await fetch("/api/posts");
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
-          const formattedData = data.map((p: any) => ({
-            ...p,
-            upvotes: p.upvotes || 0,
-            comments: p.comments || [],
-          }));
-          setPosts(formattedData);
-        }
+        if (Array.isArray(data)) setPosts(data);
       }
     } catch (err) {
       console.error("Fetch Error:", err);
     }
   };
 
-  // Post အသစ် တင်ရန် Submit
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  // Post တင်ခြင်း
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -60,26 +40,15 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("content", content);
-      if (file) {
-        formData.append("file", file);
+      if (file) formData.append("file", file);
+
+      const res = await fetch("/api/posts", { method: "POST", body: formData });
+      if (res.ok) {
+        setTitle("");
+        setContent("");
+        setFile(null);
+        await fetchPosts();
       }
-
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Post တင်ခြင်း မအောင်မြင်ပါ");
-      }
-
-      setTitle("");
-      setContent("");
-      setFile(null);
-      await fetchPosts();
-      alert("Post အောင်မြင်စွာ တက်သွားပါပြီ!");
     } catch (err: any) {
       alert("Error: " + err.message);
     } finally {
@@ -87,193 +56,168 @@ export default function HomePage() {
     }
   };
 
-  // Post ဖျက်ရန်
-  const handleDelete = async (id: number) => {
-    if (!confirm("ဒီ Post ကို ဖျက်မှာ သေချာပါသလား?")) return;
-
-    try {
-      const res = await fetch(`/api/posts?id=${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        alert("Post ဖျက်ပြီးပါပြီ!");
-        await fetchPosts();
-      } else {
-        const data = await res.json();
-        alert("ဖျက်လို့ မရပါ: " + (data.error || ""));
-      }
-    } catch (err: any) {
-      alert("Error: " + err.message);
-    }
+  // Upvote တိုးခြင်း
+  const handleUpvote = async (postId: number, currentUpvotes: number) => {
+    await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "upvote", postId, currentUpvotes: currentUpvotes || 0 }),
+    });
+    fetchPosts();
   };
 
-  // See More / See Less Toggle
-  const toggleExpand = (id: number) => {
-    setExpandedPostIds((prev) =>
-      prev.includes(id) ? prev.filter((pId) => pId !== id) : [...prev, id]
-    );
-  };
+  // Comment တင်ခြင်း
+  const handleCommentSubmit = async (postId: number) => {
+    const commentText = commentInputs[postId];
+    if (!commentText || !commentText.trim()) return;
 
-  // Upvote (Up Arrow) နှိပ်ခြင်း
-  const handleUpvote = (id: number) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === id ? { ...post, upvotes: (post.upvotes || 0) + 1 } : post
-      )
-    );
-  };
-
-  // Comment ထည့်ခြင်း
-  const handleAddComment = (postId: number) => {
-    const text = commentInputs[postId];
-    if (!text || text.trim() === "") return;
-
-    const newComment: Comment = {
-      id: Date.now(),
-      text: text,
-      createdAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    };
-
-    setPosts((prevPosts) =>
-      prevPosts.map((post) => {
-        if (post.id === postId) {
-          return {
-            ...post,
-            comments: [...(post.comments || []), newComment],
-          };
-        }
-        return post;
-      })
-    );
+    await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "comment", postId, content: commentText }),
+    });
 
     setCommentInputs({ ...commentInputs, [postId]: "" });
+    fetchPosts();
+  };
+
+  // Post ဖျက်ခြင်း
+  const handleDelete = async (id: number) => {
+    if (!confirm("ဒီ Post ကို ဖျက်မှာ သေချာပါသလား?")) return;
+    const res = await fetch(`/api/posts?id=${id}`, { method: "DELETE" });
+    if (res.ok) fetchPosts();
+  };
+
+  // See More အဖွင့်အပိတ် ပြုလုပ်ရန်
+  const toggleExpand = (id: number) => {
+    setExpandedPosts((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
-    <div style={{ maxWidth: "600px", margin: "20px auto", padding: "16px", fontFamily: "sans-serif" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>MM Sub App</h1>
+    <div style={{ maxWidth: "550px", margin: "20px auto", padding: "15px", fontFamily: "sans-serif" }}>
+      <h1 style={{ textAlign: "center" }}>MM Sub App</h1>
 
-      {/* မူရင်း Post အသစ်ဖန်တီးရန် Form */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: "#f9f9f9",
-          padding: "16px",
-          borderRadius: "8px",
-          border: "1px solid #ddd",
-          marginBottom: "30px",
-        }}
-      >
-        <h3 style={{ marginTop: 0 }}>Post အသစ်ဖန်တီးရန်</h3>
+      {/* Post ဖန်တီးရန် Form */}
+      <form onSubmit={handleSubmit} style={{ background: "#f8f9fa", padding: "15px", borderRadius: "10px", border: "1px solid #ddd" }}>
+        <h3>Post အသစ်ဖန်တီးရန်</h3>
         <input
           type="text"
           placeholder="ခေါင်းစဉ်"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
-          style={{ width: "100%", padding: "8px", marginBottom: "10px", boxSizing: "border-box" }}
+          style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }}
         />
         <textarea
           placeholder="အကြောင်းအရာ"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           required
-          rows={4}
-          style={{ width: "100%", padding: "8px", marginBottom: "10px", boxSizing: "border-box" }}
+          rows={3}
+          style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }}
         />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          style={{ marginBottom: "10px", display: "block" }}
-        />
+        <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} style={{ marginBottom: "10px" }} />
         <button
           type="submit"
           disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#0070f3",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
+          style={{ width: "100%", padding: "10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: "pointer" }}
         >
           {loading ? "တင်နေသည်..." : "Post တင်မည်"}
         </button>
       </form>
 
-      {/* Post များ စာရင်း Feed အပိုင်း */}
-      <h2>Post များ စာရင်း</h2>
+      {/* Post စာရင်း */}
+      <h2 style={{ marginTop: "30px" }}>Post များ စာရင်း</h2>
       {posts.length === 0 ? (
         <p>Post များ မရှိသေးပါ...</p>
       ) : (
         posts.map((post) => {
-          const isExpanded = expandedPostIds.includes(post.id);
-          const shouldTruncate = post.content && post.content.length > 120;
-          const displayContent = isExpanded
-            ? post.content
-            : shouldTruncate
-            ? `${post.content.slice(0, 120)}...`
-            : post.content;
+          const isExpanded = expandedPosts[post.id];
+          const isLongText = post.content.length > 100;
+          const displayContent = isExpanded || !isLongText ? post.content : post.content.substring(0, 100) + "...";
 
           return (
-            <div
-              key={post.id}
-              style={{
-                border: "1px solid #e0e0e0",
-                padding: "16px",
-                marginTop: "16px",
-                borderRadius: "10px",
-                display: "flex",
-                gap: "12px",
-                backgroundColor: "#fff",
-              }}
-            >
-              {/* Up Arrow (Upvote) ခလုတ် */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "15px", marginTop: "15px", borderRadius: "10px", background: "#fff", boxShadow: "0 2px 5px rgba(0,0,0,0.05)" }}>
+              
+              {/* Header: Upvote & Title */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <h3 style={{ margin: 0, fontSize: "18px" }}>{post.title}</h3>
                 <button
-                  onClick={() => handleUpvote(post.id)}
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
-                    backgroundColor: "#f0f0f0",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                  }}
-                  title="Upvote"
+                  onClick={() => handleUpvote(post.id, post.upvotes)}
+                  style={{ display: "flex", alignItems: "center", gap: "5px", background: "#f0f2f5", border: "none", padding: "6px 12px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold" }}
                 >
-                  ▲
+                  ▲ {post.upvotes || 0}
                 </button>
-                <span style={{ fontSize: "12px", fontWeight: "bold", marginTop: "4px" }}>
-                  {post.upvotes}
-                </span>
               </div>
 
-              {/* ပို့စ် အကြောင်းအရာ အပြည့်အစုံ */}
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <h3 style={{ margin: "0 0 8px 0" }}>{post.title}</h3>
-                  <button
-                    onClick={() => handleDelete(post.id)}
-                    style={{
-                      padding: "4px 8px",
-                      backgroundColor: "#ff4d4f",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "12px",
-                    }}
+              {/* ပုံ */}
+              {post.image_url && (
+                <img
+                  src={post.image_url}
+                  alt={post.title}
+                  style={{ maxWidth: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "8px", marginTop: "10px" }}
+                />
+              )}
+
+              {/* အကြောင်းအရာ စာသား (See More ဖြင့်) */}
+              <p style={{ color: "#333", marginTop: "10px", lineHeight: "1.5" }}>
+                {displayContent}
+                {isLongText && (
+                  <span
+                    onClick={() => toggleExpand(post.id)}
+                    style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
                   >
-                    Delete
+                    {isExpanded ? "See less" : "See more"}
+                  </span>
+                )}
+              </p>
+
+              <button
+                onClick={() => handleDelete(post.id)}
+                style={{ backgroundColor: "#ff4d4f", color: "white", border: "none", padding: "4px 8px", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
+              >
+                Delete
+              </button>
+
+              <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #eee" }} />
+
+              {/* Comment Section */}
+              <div>
+                <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#666" }}>Comments ({post.comments?.length || 0})</h4>
+
+                {/* Comment များပြရန် */}
+                {post.comments && post.comments.length > 0 && (
+                  <div style={{ marginBottom: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {post.comments.map((c: any) => (
+                      <div key={c.id} style={{ background: "#f0f2f5", padding: "8px 12px", borderRadius: "8px", fontSize: "13px" }}>
+                        {c.content}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Comment ရေးရန် Form */}
+                <div style={{ display: "flex", gap: "5px" }}>
+                  <input
+                    type="text"
+                    placeholder="Comment ရေးရန်..."
+                    value={commentInputs[post.id] || ""}
+                    onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                    style={{ flex: 1, padding: "8px", borderRadius: "5px", border: "1px solid #ccc", fontSize: "13px" }}
+                  />
+                  <button
+                    onClick={() => handleCommentSubmit(post.id)}
+                    style={{ padding: "8px 12px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "5px", fontSize: "13px", cursor: "pointer" }}
+                  >
+                    Send
                   </button>
                 </div>
+              </div>
 
-                {/* ပုံ ပြသခြင်း */}
-                {post.image_url && (
-                  
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+        }
