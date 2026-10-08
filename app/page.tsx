@@ -49,7 +49,7 @@ export default function Home() {
         setContent("");
         setFile(null);
         if (fileInputRef.current) {
-          fileInputRef.current.value = ""; // Choose File ကို ပြန်ရှင်းပစ်မည်
+          fileInputRef.current.value = ""; // Choose File ကို ပြန်ရှင်းမည်
         }
         await fetchPosts();
       }
@@ -70,7 +70,7 @@ export default function Home() {
     fetchPosts();
   };
 
-  // Views သဘာဝအတိုင်း ဖြည်းဖြည်းချင်း တိုးခြင်း
+  // Views တိုးခြင်း
   const handleToggleExpand = async (postId: number, currentViews: number) => {
     const isCurrentlyExpanded = expandedPosts[postId];
     setExpandedPosts((prev) => ({ ...prev, [postId]: !prev[postId] }));
@@ -172,12 +172,10 @@ export default function Home() {
                 <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "bold" }}>{post.title}</h3>
                 
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {/* သန့်ရှင်းသော View Display (တြိဂံ/Icon မပါ) */}
                   <span style={{ fontSize: "12px", color: "#666", background: "#f0f2f5", padding: "4px 8px", borderRadius: "12px" }}>
                     {post.views || 0} views
                   </span>
                   
-                  {/* Upvote */}
                   <button
                     onClick={() => handleUpvote(post.id, post.upvotes || 0)}
                     style={{ background: "#e6f0ff", color: "#0070f3", border: "none", padding: "5px 10px", borderRadius: "15px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}
@@ -187,7 +185,7 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* ပုံ ပေါ်စေရန် */}
+              {/* ပုံ */}
               {post.image_url && (
                 <div style={{ marginTop: "10px" }}>
                   <img
@@ -213,7 +211,7 @@ export default function Home() {
 
               <hr style={{ margin: "12px 0", border: "none", borderTop: "1px solid #eee" }} />
 
-              {/* Comments Button (ကြည့်မည်/ချုံ့မည် မပါ) */}
+              {/* Comments Button */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <button
                   onClick={() => toggleComments(post.id)}
@@ -285,4 +283,4 @@ export default function Home() {
 
     </div>
   );
-  }
+      }
