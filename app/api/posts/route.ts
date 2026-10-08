@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
 
-// Post များ ဆွဲယူရန်
+// Post များ ဆွဲယူရန် API
 export async function GET() {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*&order=id.desc`, {
@@ -19,7 +19,7 @@ export async function GET() {
   }
 }
 
-// Post အသစ် တင်ရန်
+// Post အသစ် တင်ရန် API
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 
     let imageUrl = "";
 
+    // ၁။ ဓာတ်ပုံပါပါက Upload လုပ်မည်
     if (file && file.size > 0) {
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -46,13 +47,15 @@ export async function POST(req: Request) {
       });
 
       if (uploadRes.ok) {
-        imageUrl = `${SUPABASE_URL}/storage/v1/object/public/posts/${fileName}`;
+        // မှန်ကန်သော Supabase Storage Public URL လမ်းကြောင်း
+        imageUrl = `${SUPABASE_URL}/storage/object/public/posts/${fileName}`;
       } else {
         const uploadErr = await uploadRes.json();
         console.error("Upload error details:", uploadErr);
       }
     }
 
+    // ၂။ Database ထဲသို့ Post ထည့်မည်
     const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
       method: "POST",
       headers: {
