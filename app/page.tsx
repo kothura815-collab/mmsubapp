@@ -2,6 +2,27 @@
 
 import { useState, useEffect, useRef } from "react";
 
+// Banner ကြော်ငြာကို ထည့်သွင်းပေးမည့် Component သီးသန့်
+function BannerAd() {
+  const bannerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!bannerRef.current) return;
+    
+    // ပုံစံဟောင်း script များကို ရှင်းလင်းခြင်း
+    bannerRef.current.innerHTML = "";
+
+    const script = document.createElement("script");
+    script.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
+    script.async = true;
+    script.referrerPolicy = "no-referrer-when-downgrade";
+    
+    bannerRef.current.appendChild(script);
+  }, []);
+
+  return <div ref={bannerRef} style={{ margin: "15px 0", textAlign: "center", minHeight: "50px" }} />;
+}
+
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -34,6 +55,9 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
+  // HilltopAds Direct Link (အစောက ပေးထားသော link)
+  const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
+
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
     if (savedPoints !== null) {
@@ -62,13 +86,12 @@ export default function Home() {
     }
   };
 
-  // Post တင်ရန် Ads (0/3) Logic
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
 
-    window.open("https://www.profitablecpmrate.com", "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setPostAdCountdown((prev) => {
@@ -83,13 +106,12 @@ export default function Home() {
     }, 1000);
   };
 
-  // Ads ကဏ္ဍ Click (0/10) Logic
   const handleWatchMainAd = () => {
     if (adClickCount >= 10) return;
     setIsProcessingAd(true);
     setCountdown(10);
 
-    window.open("https://www.profitablecpmrate.com", "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -102,7 +124,7 @@ export default function Home() {
           if (newCount === 10) {
             const randomPts = Math.floor(Math.random() * 10) + 1;
             updatePoints(earnedPoints + randomPts);
-            setAdClickCount(0); // Reset count after completion
+            setAdClickCount(0);
           }
           return 0;
         }
@@ -111,9 +133,8 @@ export default function Home() {
     }, 1000);
   };
 
-  // အောက်က လင့်ခ် ၂ ခု နှိပ်ပါက +1 Point ပေါင်းခြင်း
-  const handleDirectLinkClick = (url: string) => {
-    window.open(url, "_blank");
+  const handleDirectLinkClick = () => {
+    window.open(HILLTOP_ADS_LINK, "_blank");
     updatePoints(earnedPoints + 1);
   };
 
@@ -134,8 +155,8 @@ export default function Home() {
         setTitle("");
         setContent("");
         setFile(null);
-        setPostAdCount(0); // Reset task
-        updatePoints(earnedPoints + 1); // Post တင်ပြီးပါက 1 Point ပေါင်းပေးခြင်း
+        setPostAdCount(0);
+        updatePoints(earnedPoints + 1);
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
         setActiveCategory(null);
@@ -410,13 +431,13 @@ export default function Home() {
 
             <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ Points အမှတ်များ စုဆောင်းနိုင်ပါသည် -</p>
             <button 
-              onClick={() => handleDirectLinkClick("https://www.profitablecpmrate.com")}
+              onClick={handleDirectLinkClick}
               style={{ display: "block", width: "100%", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", border: "none", fontWeight: "bold", marginBottom: "10px", cursor: "pointer" }}
             >
               🔥 Points ရယူရန် လင့်ခ် (၁) (+1 Point)
             </button>
             <button 
-              onClick={() => handleDirectLinkClick("https://www.profitablecpmrate.com")}
+              onClick={handleDirectLinkClick}
               style={{ display: "block", width: "100%", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer" }}
             >
               ⭐ Points ရယူရန် လင့်ခ် (၂) (+1 Point)
@@ -452,6 +473,9 @@ export default function Home() {
             <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>
               {activeCategoryLabel ? `${activeCategoryLabel} - ` : ""}Recent Posts
             </h2>
+
+            {/* Banner ကြော်ငြာထည့်သွင်းထားသော နေရာ */}
+            <BannerAd />
 
             {filteredPosts.length === 0 ? (
               <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
@@ -574,4 +598,4 @@ export default function Home() {
 
     </div>
   );
-}
+            }
