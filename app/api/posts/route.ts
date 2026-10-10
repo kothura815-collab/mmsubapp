@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
 
+export const revalidate = 0; // Disable slow caching, enforce instant responses
+
 export async function GET() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*,comments(*)&order=id.desc`, {
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      cache: "no-store",
-    });
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/posts?select=id,title,content,category,image_url,views,created_at,comments(id,content)&order=created_at.desc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        cache: "no-store",
+      }
+    );
 
     const data = await res.json();
     return NextResponse.json(data);
@@ -25,7 +30,6 @@ export async function POST(req: Request) {
     if (contentType.includes("application/json")) {
       const body = await req.json();
 
-      // View တိုးခြင်း
       if (body.action === "incrementView") {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
           method: "PATCH",
@@ -39,7 +43,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: updateRes.ok });
       }
 
-      // Comment တင်ခြင်း
       if (body.action === "comment") {
         if (!body.content || !body.content.trim()) {
           return NextResponse.json({ error: "Empty comment" }, { status: 400 });
@@ -60,11 +63,10 @@ export async function POST(req: Request) {
       }
     }
 
-    // Post အသစ် တင်ခြင်း (Server-side validation)
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
-    const category = (formData.get("category") as string) || "funny";
+    const category = (formData.get("category") as string) || "social_news";
     const file = formData.get("file") as File | null;
 
     if (!title || !content) {
@@ -73,7 +75,6 @@ export async function POST(req: Request) {
 
     let imageUrl = "";
     if (file && file.size > 0) {
-      // ဖိုင်အရွယ်အစားကို ကန့်သတ်ခြင်း (Max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         return NextResponse.json({ error: "File size too large" }, { status: 400 });
       }
