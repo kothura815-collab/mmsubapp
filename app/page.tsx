@@ -2,21 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Banner ကြော်ငြာကို ထည့်သွင်းပေးမည့် Component သီးသန့်
+// Banner Ad Component
 function BannerAd() {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!bannerRef.current) return;
-    
-    // ပုံစံဟောင်း script များကို ရှင်းလင်းခြင်း
     bannerRef.current.innerHTML = "";
-
     const script = document.createElement("script");
     script.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
     script.async = true;
     script.referrerPolicy = "no-referrer-when-downgrade";
-    
     bannerRef.current.appendChild(script);
   }, []);
 
@@ -36,15 +32,22 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Post Task State (0/3)
+  // Notification Popup State (Middle Center)
+  const [showToast, setShowToast] = useState(false);
+
+  // Post Ad Task State (0/3)
   const [postAdCount, setPostAdCount] = useState(0);
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Ads Section Task State (0/10)
-  const [adClickCount, setAdClickCount] = useState(0);
-  const [isProcessingAd, setIsProcessingAd] = useState(false);
-  const [countdown, setCountdown] = useState(10);
+  // Ads Section State (3 Tasks: 0/10 each & 4-Hour Lock)
+  const [adTaskCounts, setAdTaskCounts] = useState<[number, number, number]>([0, 0, 0]);
+  const [processingTaskIndex, setProcessingTaskIndex] = useState<number | null>(null);
+  const [taskCountdown, setTaskCountdown] = useState(10);
+  const [lockUntil, setLockUntil] = useState<number | null>(null);
+  const [lockRemainingTime, setLockRemainingTime] = useState("");
+
+  // Points State
   const [earnedPoints, setEarnedPoints] = useState(0);
 
   // UI Toggles
@@ -55,23 +58,66 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // HilltopAds Direct Link (အစောက ပေးထားသော link)
+  // HilltopAds Direct Link
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
 
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
-    if (savedPoints !== null) {
-      setEarnedPoints(parseInt(savedPoints, 10) || 0);
-    } else {
-      setEarnedPoints(0);
-      localStorage.setItem("mm_sub_app_points", "0");
+    setEarnedPoints(savedPoints !== null ? parseInt(savedPoints, 10) || 0 : 0);
+
+    const savedTaskCounts = localStorage.getItem("mm_sub_app_ad_task_counts");
+    if (savedTaskCounts) {
+      try { setAdTaskCounts(JSON.parse(savedTaskCounts)); } catch (e) {}
     }
+
+    const savedLockUntil = localStorage.getItem("mm_sub_app_ad_lock_until");
+    if (savedLockUntil) {
+      const lockTime = parseInt(savedLockUntil, 10);
+      if (lockTime > Date.now()) {
+        setLockUntil(lockTime);
+      } else {
+        localStorage.removeItem("mm_sub_app_ad_lock_until");
+      }
+    }
+
     fetchPosts();
   }, []);
+
+  // Timer for 4-Hour Lock
+  useEffect(() => {
+    if (!lockUntil) return;
+    const interval = setInterval(() => {
+      const diff = lockUntil - Date.now();
+      if (diff <= 0) {
+        setLockUntil(null);
+        setAdTaskCounts([0, 0, 0]);
+        localStorage.removeItem("mm_sub_app_ad_lock_until");
+        localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify([0, 0, 0]));
+        clearInterval(interval);
+      } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setLockRemainingTime(`${hours}h ${minutes}m ${seconds}s`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockUntil]);
 
   const updatePoints = (newPts: number) => {
     setEarnedPoints(newPts);
     localStorage.setItem("mm_sub_app_points", newPts.toString());
+  };
+
+  const updateTaskCounts = (newCounts: [number, number, number]) => {
+    setAdTaskCounts(newCounts);
+    localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify(newCounts));
+
+    if (newCounts[0] >= 10 && newCounts[1] >= 10 && newCounts[2] >= 10) {
+      const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
+      setLockUntil(fourHoursLater);
+      localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
+    }
   };
 
   const fetchPosts = async () => {
@@ -90,7 +136,6 @@ export default function Home() {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
-
     window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
@@ -106,36 +151,31 @@ export default function Home() {
     }, 1000);
   };
 
-  const handleWatchMainAd = () => {
-    if (adClickCount >= 10) return;
-    setIsProcessingAd(true);
-    setCountdown(10);
+  const handleWatchTaskAd = (index: number) => {
+    if (lockUntil || processingTaskIndex !== null || adTaskCounts[index] >= 10) return;
 
+    setProcessingTaskIndex(index);
+    setTaskCountdown(10);
     window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
-      setCountdown((prev) => {
+      setTaskCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setIsProcessingAd(false);
-          const newCount = adClickCount + 1;
-          setAdClickCount(newCount);
+          setProcessingTaskIndex(null);
+          const updatedCounts: [number, number, number] = [...adTaskCounts];
+          updatedCounts[index] = updatedCounts[index] + 1;
 
-          if (newCount === 10) {
+          if (updatedCounts[index] === 10) {
             const randomPts = Math.floor(Math.random() * 10) + 1;
             updatePoints(earnedPoints + randomPts);
-            setAdClickCount(0);
           }
+          updateTaskCounts(updatedCounts);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  };
-
-  const handleDirectLinkClick = () => {
-    window.open(HILLTOP_ADS_LINK, "_blank");
-    updatePoints(earnedPoints + 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -157,12 +197,16 @@ export default function Home() {
         setFile(null);
         setPostAdCount(0);
         updatePoints(earnedPoints + 1);
+
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
         setActiveCategory(null);
         setActiveCategoryLabel("");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Submit Error:", err);
     } finally {
       setLoading(false);
@@ -191,10 +235,7 @@ export default function Home() {
 
   const handleShare = (postTitle: string) => {
     if (navigator.share) {
-      navigator.share({
-        title: postTitle,
-        url: window.location.href,
-      }).catch(() => {});
+      navigator.share({ title: postTitle, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
     }
@@ -244,28 +285,17 @@ export default function Home() {
     fetchPosts();
   };
 
-  const handleContactAdmin = () => {
-    window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer");
-  };
-
   const renderFormattedContent = (text: string, isExpanded: boolean) => {
     if (!text) return "";
     const isLongText = text.length > 80;
     const rawDisplay = isExpanded || !isLongText ? text : text.substring(0, 80) + "...";
-
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = rawDisplay.split(urlRegex);
 
     return parts.map((part, index) => {
       if (part.match(urlRegex)) {
         return (
-          <a
-            key={index}
-            href={part}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "#0070f3", textDecoration: "underline", wordBreak: "break-all" }}
-          >
+          <a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{ color: "#0070f3", textDecoration: "underline", wordBreak: "break-all" }}>
             {part}
           </a>
         );
@@ -282,24 +312,25 @@ export default function Home() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
       <div ref={topRef}></div>
 
+      {/* Middle Center Toast Notification */}
+      {showToast && (
+        <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "rgba(0,0,0,0.85)", color: "#fff", padding: "15px 30px", borderRadius: "10px", fontWeight: "bold", fontSize: "18px", zIndex: 1000, boxShadow: "0 4px 15px rgba(0,0,0,0.3)" }}>
+          🎉 Points +1
+        </div>
+      )}
+
       {/* Header Area */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
         <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
 
         <div style={{ display: "flex", gap: "6px" }}>
           {activeCategory && (
-            <button 
-              onClick={handleBackToHome}
-              style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
-            >
+            <button onClick={handleBackToHome} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>
               ⬅ Back
             </button>
           )}
 
-          <button 
-            onClick={() => setShowMenu(!showMenu)}
-            style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
-          >
+          <button onClick={() => setShowMenu(!showMenu)} style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>
             {showMenu ? "✕ ပိတ်မည်" : "☰ MENU"}
           </button>
         </div>
@@ -323,7 +354,7 @@ export default function Home() {
       {/* Main Content Area */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Post Form (0/3 Task) */}
+        {/* Post Form */}
         {activeCategory === "post" && (
           <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
             <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Post အသစ်ဖန်တီးရန်</h3>
@@ -401,7 +432,7 @@ export default function Home() {
               disabled={loading || postAdCount < 3}
               style={{ width: "100%", padding: "12px", backgroundColor: postAdCount < 3 ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: postAdCount < 3 ? "not-allowed" : "pointer" }}
             >
-              {loading ? "တင်နေသည်..." : postAdCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည် (+1 Point)"}
+              {loading ? "တင်နေသည်..." : postAdCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည်"}
             </button>
           </form>
         )}
@@ -409,39 +440,43 @@ export default function Home() {
         {/* Ads ကဏ္ဍ */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-            <h2>📢 Ads & Points</h2>
-            <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 15px", borderRadius: "8px", display: "inline-block", margin: "10px 0", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
-              💰 Points: {earnedPoints}
+            <h2 style={{ marginBottom: "15px" }}>📢 Ads & Points</h2>
+            
+            <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 20px", borderRadius: "8px", display: "inline-block", marginBottom: "20px", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
+              💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints}
             </div>
 
-            <div style={{ background: "#fff3cd", padding: "12px", borderRadius: "8px", margin: "15px 0", border: "1px solid #ffeeba", fontSize: "13px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
-                <span>Ads ကြည့်ရန် (Click): <b>({adClickCount}/10)</b></span>
-                <button 
-                  type="button" 
-                  onClick={handleWatchMainAd} 
-                  disabled={isProcessingAd || adClickCount >= 10} 
-                  style={{ background: "#ffc107", border: "none", padding: "6px 14px", borderRadius: "6px", fontWeight: "bold", cursor: adClickCount >= 10 ? "not-allowed" : "pointer" }}
-                >
-                  {isProcessingAd ? `Processing (${countdown}s)...` : "Ads ကြည့်မည်"}
-                </button>
+            {/* 4-Hour Lock Banner */}
+            {lockUntil ? (
+              <div style={{ background: "#fff5f5", border: "1px solid #feb2b2", color: "#c53030", padding: "15px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", margin: "10px 0" }}>
+                🔒 Task များအားလုံး ပြီးဆုံးသွားပါပြီ။<br />
+                ကျေးဇူးပြု၍ <b>{lockRemainingTime}</b> ကြာပြီးမှ ပြန်လည်ကြည့်ရှုပေးပါရန်။
               </div>
-              {isProcessingAd && <p style={{ color: "#856404", margin: "5px 0 0 0" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
-            </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {[0, 1, 2].map((idx) => {
+                  const isDone = adTaskCounts[idx] >= 10;
+                  const isProcessing = processingTaskIndex === idx;
 
-            <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ Points အမှတ်များ စုဆောင်းနိုင်ပါသည် -</p>
-            <button 
-              onClick={handleDirectLinkClick}
-              style={{ display: "block", width: "100%", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", border: "none", fontWeight: "bold", marginBottom: "10px", cursor: "pointer" }}
-            >
-              🔥 Points ရယူရန် လင့်ခ် (၁) (+1 Point)
-            </button>
-            <button 
-              onClick={handleDirectLinkClick}
-              style={{ display: "block", width: "100%", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer" }}
-            >
-              ⭐ Points ရယူရန် လင့်ခ် (၂) (+1 Point)
-            </button>
+                  return (
+                    <div key={idx} style={{ background: "#fff3cd", padding: "12px 15px", borderRadius: "8px", border: "1px solid #ffeeba", fontSize: "13px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span>Ads ကြည့်ရန် (Click): <b>({adTaskCounts[idx]}/10)</b></span>
+                        <button 
+                          type="button" 
+                          onClick={() => handleWatchTaskAd(idx)} 
+                          disabled={isDone || processingTaskIndex !== null} 
+                          style={{ background: isDone ? "#cbd5e0" : "#ffc107", color: isDone ? "#718096" : "#000", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: isDone || processingTaskIndex !== null ? "not-allowed" : "pointer" }}
+                        >
+                          {isDone ? "ပြီးပါပြီ" : isProcessing ? `Processing (${taskCountdown}s)...` : "Ads ကြည့်မည်"}
+                        </button>
+                      </div>
+                      {isProcessing && <p style={{ color: "#856404", margin: "8px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -451,17 +486,11 @@ export default function Home() {
             <h2 style={{ marginTop: 0 }}>About & Admin Support</h2>
             <p>🌟 <b>App ၏ ရည်ရွယ်ချက်:</b> မိမိကျွမ်းကျင်ရာများ၊ စိတ်ခံစားမှုများ၊ ပျော်ရွှင်မှုများနှင့် အနားယူရင်း ကိုယ်တိုင်ဖန်တီးနိုင်ရန် ရည်ရွယ်ပါသည်။</p>
             <p>📌 <b>အသုံးပြုပုံ:</b> ဆိုရှယ်မီဒီယာပေါ်တွင် ဟော့နေသည်များကို မျှဝေရန်၊ ရင်ဖွင့်ရန်၊ သတင်းစကားပါးရန်နှင့် ဝတ္ထု/ဇာတ်ကားအညွှန်းများကို ဖတ်ရှုနိုင်ပါသည်။</p>
-            
             <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #eee" }} />
-            
             <p style={{ color: "#e53e3e", fontWeight: "bold", fontSize: "14px" }}>
               ⚠️ ပို့စ်ကို ဖျက်ချင်ပါက Admin ဆီ တိုက်ရိုက် ဆက်သွယ်ပါရန်။
             </p>
-            
-            <button 
-              onClick={handleContactAdmin}
-              style={{ background: "#0088cc", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}
-            >
+            <button onClick={() => window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer")} style={{ background: "#0088cc", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
               💬 Contact Admin (Telegram)
             </button>
           </div>
@@ -474,7 +503,6 @@ export default function Home() {
               {activeCategoryLabel ? `${activeCategoryLabel} - ` : ""}Recent Posts
             </h2>
 
-            {/* Banner ကြော်ငြာထည့်သွင်းထားသော နေရာ */}
             <BannerAd />
 
             {filteredPosts.length === 0 ? (
@@ -497,38 +525,24 @@ export default function Home() {
 
                     {post.image_url && (
                       <div style={{ marginTop: "8px" }}>
-                        <img
-                          src={post.image_url}
-                          alt="Post attachment"
-                          style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "6px" }}
-                        />
+                        <img src={post.image_url} alt="Post attachment" style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "6px" }} />
                       </div>
                     )}
 
                     <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
                       {renderFormattedContent(post.content, isExpanded)}
                       {isLongText && (
-                        <span
-                          onClick={() => handleToggleExpand(post.id, post.views || 0)}
-                          style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
-                        >
+                        <span onClick={() => handleToggleExpand(post.id, post.views || 0)} style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}>
                           {isExpanded ? " See less" : " See more"}
                         </span>
                       )}
                     </p>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
-                      <button
-                        onClick={() => toggleComments(post.id)}
-                        style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}
-                      >
+                      <button onClick={() => toggleComments(post.id)} style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}>
                         💬 Comments ({post.comments?.length || 0})
                       </button>
-
-                      <button
-                        onClick={() => handleShare(post.title)}
-                        style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
-                      >
+                      <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
                         🔗 Share
                       </button>
                     </div>
@@ -548,17 +562,8 @@ export default function Home() {
                         )}
 
                         <div style={{ display: "flex", gap: "5px" }}>
-                          <input
-                            type="text"
-                            placeholder="Write a comment..."
-                            value={commentInputs[post.id] || ""}
-                            onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                            style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }}
-                          />
-                          <button
-                            onClick={() => handleCommentSubmit(post.id)}
-                            style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
-                          >
+                          <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
+                          <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
                             Send
                           </button>
                         </div>
@@ -575,27 +580,10 @@ export default function Home() {
       </div>
 
       {/* Top Button */}
-      <button
-        onClick={scrollToTop}
-        style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
-          background: "#0070f3",
-          color: "#fff",
-          border: "none",
-          padding: "8px 14px",
-          borderRadius: "20px",
-          fontWeight: "bold",
-          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-          cursor: "pointer",
-          fontSize: "13px",
-          zIndex: 99
-        }}
-      >
+      <button onClick={scrollToTop} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", boxShadow: "0 4px 10px rgba(0,0,0,0.2)", cursor: "pointer", fontSize: "13px", zIndex: 99 }}>
         ▲ Top
       </button>
 
     </div>
   );
-            }
+}
