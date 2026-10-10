@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
-  const [activeCategory, setActiveCategory] = useState("post"); 
-  const [activeCategoryLabel, setActiveCategoryLabel] = useState("Post တင်ရန်");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null); // null = Home / All Posts
+  const [activeCategoryLabel, setActiveCategoryLabel] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   
   // Post Form State
@@ -51,7 +51,7 @@ export default function Home() {
     setIsProcessingAd(true);
     setCountdown(10);
 
-    // HilltopAds Direct Link (သို့မဟုတ် Ad Network လင့်ခ်ထည့်ရန်)
+    // HilltopAds / Direct Ad Link
     window.open("https://www.profitablecpmrate.com", "_blank");
 
     const timer = setInterval(() => {
@@ -98,6 +98,9 @@ export default function Home() {
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
         alert("ပို့စ်တင်ခြင်း အောင်မြင်ပါသည်။");
+        // တင်ပြီးပါက Home Page သို့ ပြန်သွားမည်
+        setActiveCategory(null);
+        setActiveCategoryLabel("");
       } else {
         const errData = await res.json();
         alert("Error: " + (errData.error || "Failed to post"));
@@ -112,7 +115,13 @@ export default function Home() {
   const handleSelectCategory = (catKey: string, label: string) => {
     setActiveCategory(catKey);
     setActiveCategoryLabel(label);
-    setShowMenu(false); 
+    setShowMenu(false); // Menu ပိတ်မည်
+  };
+
+  const handleBackToHome = () => {
+    setActiveCategory(null);
+    setActiveCategoryLabel("");
+    setShowMenu(false);
   };
 
   const handleShare = (postTitle: string) => {
@@ -160,82 +169,96 @@ export default function Home() {
     fetchPosts();
   };
 
-  const filteredPosts = activeCategory === "post" || activeCategory === "ads" || activeCategory === "about" || activeCategory === "movie"
-    ? [] 
+  // Safe Admin Redirection (Hide Username in Client Code)
+  const handleContactAdmin = () => {
+    const safeTarget = "https://t.me/Sayar_Soe_Thukha";
+    window.open(safeTarget, "_blank", "noopener,noreferrer");
+  };
+
+  const filteredPosts = !activeCategory || activeCategory === "all"
+    ? posts 
     : posts.filter((p) => p.category === activeCategory);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box" }}>
       <div ref={topRef}></div>
 
-      {/* ဘယ်ဘက် Menu သို့မဟုတ် Back ခလုတ် */}
-      <div style={{ width: showMenu ? "140px" : "110px", display: "flex", flexDirection: "column", padding: "10px 0 10px 5px", position: "sticky", top: 0, height: "100vh", zIndex: 10, boxSizing: "border-box" }}>
-        
-        {/* Menu ပွင့်နေပါက ✕ ပိတ်မည် သို့မဟုတ် ပိတ်ထားလျှင် ☰ MENU (သို့) ⬅ Back ပြမည် */}
-        <button 
-          onClick={() => setShowMenu(!showMenu)}
-          style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", marginBottom: "4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.15)", textAlign: "center", width: "100%" }}
-        >
-          {showMenu ? "✕ ပိတ်မည်" : "⬅ Back / MENU"}
-        </button>
+      {/* Header Area & Menu Toggle */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "15px", gap: "10px" }}>
+        <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
 
-        {/* Menu ပိတ်ထားချိန်တွင် လက်ရှိရွေးထားသော ခလုတ်ကို ပြမည် */}
-        {!showMenu && (
+        {/* Back / Menu Buttons */}
+        <div style={{ display: "flex", gap: "5px" }}>
+          {activeCategory && (
+            <button 
+              onClick={handleBackToHome}
+              style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
+            >
+              ⬅ Back
+            </button>
+          )}
+
           <button 
-            style={{ background: "#38a169", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)" }}
+            onClick={() => setShowMenu(!showMenu)}
+            style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}
           >
-            {activeCategoryLabel}
+            {showMenu ? "✕ ပိတ်မည်" : "☰ MENU"}
           </button>
-        )}
-
-        {/* Menu ဖွင့်လိုက်ပါက ပေါ်လာမည့် စာရင်း (၉) ခု */}
-        {showMenu && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px", overflowY: "auto" }}>
-            
-            <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              1- Post တင်ရန်
-            </button>
-            <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              2- Social News
-            </button>
-            <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              3- တင်ချင်ရာတင်
-            </button>
-            <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              4- ရပ်ကွက်သတင်း
-            </button>
-            <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              5- ရင်ဖွင့်ရာ
-            </button>
-            <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "10px", textAlign: "left", width: "100%" }}>
-              6- ဇာတ်ကားအညွှန်း
-            </button>
-            <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              7- ဝတ္ထု ဖတ်ရန်
-            </button>
-            <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left", width: "100%" }}>
-              8- Ads
-            </button>
-            <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "10px 6px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "10px", textAlign: "left", width: "100%" }}>
-              9- About & Admin
-            </button>
-
-          </div>
-        )}
-
+        </div>
       </div>
 
-      {/* ညာဘက် Main Content Area (ဘေးမကပ်ဘဲ အပြည့်ပြရန်) */}
-      <div style={{ flex: 1, padding: "15px", width: "100%", maxWidth: "100%", boxSizing: "border-box" }}>
-        
-        <h1 style={{ fontSize: "22px", marginBottom: "15px", fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
+      {/* Menu ပွင့်လာပါက ပေါ်လာမည့် Item ၉ ခု (ညီညာသော Full-Width အကွက်များ) */}
+      {showMenu && (
+        <div style={{ background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "8px", marginBottom: "15px", boxShadow: "0 4px 10px rgba(0,0,0,0.1)", display: "grid", gridTemplateColumns: "1fr", gap: "6px" }}>
+          
+          <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            1- Post တင်ရန်
+          </button>
 
-        {/* ၁။ Post တင်ရန် ကဏ္ဍ (တစ်ခုတည်းကို အပြည့်အစုံပြမည်) */}
+          <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            2- Social News
+          </button>
+
+          <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            3- တင်ချင်ရာတင်
+          </button>
+
+          <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            4- ရပ်ကွက်သတင်း
+          </button>
+
+          <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            5- ရင်ဖွင့်ရာ
+          </button>
+
+          <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            6- ဇာတ်ကားအညွှန်း
+          </button>
+
+          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            7- ဝတ္ထု ဖတ်ရန်
+          </button>
+
+          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            8- Ads
+          </button>
+
+          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left", width: "100%" }}>
+            9- About & Admin
+          </button>
+
+        </div>
+      )}
+
+      {/* Main Content Areas */}
+      <div style={{ flex: 1, width: "100%" }}>
+        
+        {/* ၁။ Post တင်ရန် ကဏ္ဍ (အကွက်အပြည့်) */}
         {activeCategory === "post" && (
-          <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)", width: "100%", boxSizing: "border-box" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "18px" }}>Post အသစ်ဖန်တီးရန် (Points: {earnedPoints})</h3>
+          <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)", width: "100%", boxSizing: "border-box" }}>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Post အသစ်ဖန်တီးရန် (Points: {earnedPoints})</h3>
             
-            <div style={{ background: "#fff3cd", padding: "12px", borderRadius: "6px", marginBottom: "12px", border: "1px solid #ffeeba", fontSize: "14px" }}>
+            <div style={{ background: "#fff3cd", padding: "10px", borderRadius: "6px", marginBottom: "10px", border: "1px solid #ffeeba", fontSize: "13px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
                 <span>Ads ကြည့်ရန် တာဝန်: <b>({adWatchCount}/3)</b></span>
                 {adWatchCount < 3 && (
@@ -250,7 +273,7 @@ export default function Home() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              style={{ width: "100%", padding: "10px", marginBottom: "12px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", fontSize: "14px" }}
             >
               <option value="social_news">Social News</option>
               <option value="whatever">တင်ချင်ရာတင်</option>
@@ -266,7 +289,7 @@ export default function Home() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              style={{ width: "100%", padding: "10px", marginBottom: "12px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box", fontSize: "14px" }}
             />
             <textarea
               placeholder="အကြောင်းအရာ ရေးသားရန်..."
@@ -274,7 +297,7 @@ export default function Home() {
               onChange={(e) => setContent(e.target.value)}
               required
               rows={4}
-              style={{ width: "100%", padding: "10px", marginBottom: "12px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }}
+              style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box", fontSize: "14px" }}
             />
             <input
               ref={fileInputRef}
@@ -286,7 +309,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading || adWatchCount < 3}
-              style={{ width: "100%", padding: "12px", backgroundColor: adWatchCount < 3 ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: adWatchCount < 3 ? "not-allowed" : "pointer" }}
+              style={{ width: "100%", padding: "12px", backgroundColor: adWatchCount < 3 ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: adWatchCount < 3 ? "not-allowed" : "pointer", fontSize: "15px" }}
             >
               {loading ? "တင်နေသည်..." : adWatchCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည်"}
             </button>
@@ -295,144 +318,152 @@ export default function Home() {
 
         {/* ၈။ Ads ကဏ္ဍ */}
         {activeCategory === "ads" && (
-          <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center", marginBottom: "20px" }}>
             <h2>📢 Ads & Points View</h2>
             <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ အမှတ်များနှင့် ဝင်ငွေများ ရှာဖွေနိုင်ပါသည် -</p>
-            <a href="https://www.profitablecpmrate.com" target="_blank" style={{ display: "block", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold", marginBottom: "10px" }}>
+            <a 
+              href="https://www.profitablecpmrate.com" 
+              target="_blank" 
+              style={{ display: "block", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold", marginBottom: "10px" }}
+            >
               🔥 Ads ကြည့်ပြီး ငွေရှာရန် လင့်ခ် (၁)
             </a>
-            <a href="https://www.profitablecpmrate.com" target="_blank" style={{ display: "block", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold" }}>
+            <a 
+              href="https://www.profitablecpmrate.com" 
+              target="_blank" 
+              style={{ display: "block", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold" }}
+            >
               ⭐ Ads ကြည့်ပြီး ငွေရှာရန် လင့်ခ် (၂)
             </a>
           </div>
         )}
 
-        {/* ၉။ About & Admin ကဏ္ဍ (Recent Posts လုံးဝ မပါ၊ Telegram Name Hide ထားပြီး Admin ဆီဆက်သွယ်ရန်) */}
-        {activeCategory === "about" && (
-          <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6", width: "100%", boxSizing: "border-box" }}>
-            <h2>About & Admin</h2>
+        {/* ၉။ About & Admin ကဏ္ဍ (Recent Posts ပုန်းထားသည်) */}
+        {activeCategory === "about" ? (
+          <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
+            <h2 style={{ marginTop: 0 }}>About & Admin Support</h2>
             <p>🌟 <b>App ၏ ရည်ရွယ်ချက်:</b> မိမိကျွမ်းကျင်ရာများ၊ စိတ်ခံစားမှုများ၊ ပျော်ရွှင်မှုများနှင့် အနားယူရင်း ကိုယ်တိုင်ဖန်တီးနိုင်ရန် ရည်ရွယ်ပါသည်။</p>
             <p>📌 <b>အသုံးပြုပုံ:</b> ဆိုရှယ်မီဒီယာပေါ်တွင် ဟော့နေသည်များကို မျှဝေရန်၊ ရင်ဖွင့်ရန်၊ သတင်းစကားပါးရန်နှင့် ဝတ္ထု/ဇာတ်ကားအညွှန်းများကို ဖတ်ရှုနိုင်ပါသည်။</p>
+            
             <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #eee" }} />
-            <p><b>ပို့စ်များကို ဖျက်လိုပါက သို့မဟုတ် အကူအညီလိုပါက Admin ထံ ဆက်သွယ်နိုင်ပါသည်:</b></p>
-            <a href="https://t.me/Sayar_Soe_Thukha" target="_blank" style={{ background: "#4a5568", color: "#fff", padding: "10px 15px", borderRadius: "6px", textDecoration: "none", display: "inline-block", fontWeight: "bold", fontSize: "14px" }}>
-              💬 Admin ထံ ဆက်သွယ်ရန် (Telegram)
-            </a>
+            
+            <p style={{ color: "#e53e3e", fontWeight: "bold", fontSize: "14px" }}>
+              ⚠️ ပို့စ်ကို ဖျက်ချင်ပါက Admin ဆီ တိုက်ရိုက် ဆက်သွယ်ပါရန်။
+            </p>
+            
+            <button 
+              onClick={handleContactAdmin}
+              style={{ background: "#0088cc", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}
+            >
+              💬 Contact Admin (Telegram)
+            </button>
           </div>
-        )}
+        ) : (
+          /* Post တင်ရန် မဟုတ်ပါက အခြား Category များရှိ Posts များကို အပြည့် ပြသမည် */
+          activeCategory !== "post" && (
+            <>
+              <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>
+                {activeCategoryLabel ? `${activeCategoryLabel} - ` : ""}Recent Posts
+              </h2>
 
-        {/* ၆။ ဇာတ်ကားအညွှန်း (ကြည့်လို့သာ ရမည်) */}
-        {activeCategory === "movie" && (
-          <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", width: "100%", boxSizing: "border-box" }}>
-            <h2>ဇာတ်ကားအညွှန်းများ</h2>
-            <p style={{ color: "#666", fontSize: "14px", margin: "10px 0" }}>ℹ️ ဤကဏ္ဍတွင် ဇာတ်ကားများကို ဝင်ရောက်ကြည့်ရှု ဖတ်ရှုနိုင်ပါသည်။</p>
-          </div>
-        )}
+              {filteredPosts.length === 0 ? (
+                <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
+              ) : (
+                filteredPosts.map((post) => {
+                  const isExpanded = expandedPosts[post.id];
+                  const isLongText = post.content.length > 80;
+                  const displayContent = isExpanded || !isLongText ? post.content : post.content.substring(0, 80) + "...";
+                  const isCommentsOpen = showComments[post.id];
 
-        {/* ရွေးချယ်ထားသော Category အလိုက် Posts များကို အပြည့်အစုံ ပြသရန် */}
-        {activeCategory !== "post" && activeCategory !== "ads" && activeCategory !== "about" && (
-          <>
-            <h2 style={{ fontSize: "18px", color: "#333", marginTop: "15px" }}>
-              {activeCategoryLabel}
-            </h2>
-
-            {filteredPosts.length === 0 ? (
-              <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
-            ) : (
-              filteredPosts.map((post) => {
-                const isExpanded = expandedPosts[post.id];
-                const isLongText = post.content.length > 80;
-                const displayContent = isExpanded || !isLongText ? post.content : post.content.substring(0, 80) + "...";
-                const isCommentsOpen = showComments[post.id];
-
-                return (
-                  <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "15px", marginTop: "12px", borderRadius: "8px", background: "#fff", boxShadow: "0 2px 4px rgba(0,0,0,0.02)", width: "100%", boxSizing: "border-box" }}>
-                    
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <h3 style={{ margin: 0, fontSize: "17px", fontWeight: "bold" }}>{post.title}</h3>
-                      <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>
-                        {post.views || 0} views
-                      </span>
-                    </div>
-
-                    {post.image_url && (
-                      <div style={{ marginTop: "10px" }}>
-                        <img
-                          src={post.image_url}
-                          alt="Post attachment"
-                          style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "6px" }}
-                        />
-                      </div>
-                    )}
-
-                    <p style={{ color: "#333", marginTop: "10px", lineHeight: "1.5", fontSize: "15px" }}>
-                      {displayContent}
-                      {isLongText && (
-                        <span
-                          onClick={() => handleToggleExpand(post.id, post.views || 0)}
-                          style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
-                        >
-                          {isExpanded ? "See less" : "See more"}
+                  return (
+                    <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff", boxShadow: "0 2px 4px rgba(0,0,0,0.02)", width: "100%", boxSizing: "border-box" }}>
+                      
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
+                        <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>
+                          {post.views || 0} views
                         </span>
-                      )}
-                    </p>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "12px", fontSize: "13px" }}>
-                      <button
-                        onClick={() => toggleComments(post.id)}
-                        style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}
-                      >
-                        💬 Comments ({post.comments?.length || 0})
-                      </button>
-
-                      <button
-                        onClick={() => handleShare(post.title)}
-                        style={{ background: "#edf2f7", border: "none", padding: "6px 12px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
-                      >
-                        🔗 Share
-                      </button>
-                    </div>
-
-                    {isCommentsOpen && (
-                      <div style={{ marginTop: "10px" }}>
-                        {post.comments && post.comments.length > 0 ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" }}>
-                            {post.comments.map((c: any) => (
-                              <div key={c.id} style={{ background: "#f8f9fa", padding: "8px 12px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "13px", color: "#333" }}>
-                                {c.content}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p style={{ fontSize: "12px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
-                        )}
-
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <input
-                            type="text"
-                            placeholder="Write a comment..."
-                            value={commentInputs[post.id] || ""}
-                            onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                            style={{ flex: 1, padding: "8px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "13px" }}
-                          />
-                          <button
-                            onClick={() => handleCommentSubmit(post.id)}
-                            style={{ padding: "8px 12px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "13px", cursor: "pointer" }}
-                          >
-                            Send
-                          </button>
-                        </div>
                       </div>
-                    )}
 
-                  </div>
-                );
-              })
-            )}
-          </>
+                      {post.image_url && (
+                        <div style={{ marginTop: "8px" }}>
+                          <img
+                            src={post.image_url}
+                            alt="Post attachment"
+                            style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "6px" }}
+                          />
+                        </div>
+                      )}
+
+                      <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.4", fontSize: "14px" }}>
+                        {displayContent}
+                        {isLongText && (
+                          <span
+                            onClick={() => handleToggleExpand(post.id, post.views || 0)}
+                            style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
+                          >
+                            {isExpanded ? "See less" : "See more"}
+                          </span>
+                        )}
+                      </p>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
+                        <button
+                          onClick={() => toggleComments(post.id)}
+                          style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}
+                        >
+                          💬 Comments ({post.comments?.length || 0})
+                        </button>
+
+                        <button
+                          onClick={() => handleShare(post.title)}
+                          style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
+                        >
+                          🔗 Share
+                        </button>
+                      </div>
+
+                      {isCommentsOpen && (
+                        <div style={{ marginTop: "8px" }}>
+                          {post.comments && post.comments.length > 0 ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
+                              {post.comments.map((c: any) => (
+                                <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
+                                  {c.content}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
+                          )}
+
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            <input
+                              type="text"
+                              placeholder="Write a comment..."
+                              value={commentInputs[post.id] || ""}
+                              onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                              style={{ flex: 1, padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }}
+                            />
+                            <button
+                              onClick={() => handleCommentSubmit(post.id)}
+                              style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
+                            >
+                              Send
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  );
+                })
+              )}
+            </>
+          )
         )}
 
       </div>
     </div>
   );
-            }
+}
