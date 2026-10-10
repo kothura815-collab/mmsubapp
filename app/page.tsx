@@ -15,7 +15,12 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Ads Click Task State (0/10 System & 10s Processing)
+  // Post Task State (0/3)
+  const [postAdCount, setPostAdCount] = useState(0);
+  const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
+  const [postAdCountdown, setPostAdCountdown] = useState(10);
+
+  // Ads Section Task State (0/10)
   const [adClickCount, setAdClickCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -31,8 +36,11 @@ export default function Home() {
 
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
-    if (savedPoints) {
+    if (savedPoints !== null) {
       setEarnedPoints(parseInt(savedPoints, 10) || 0);
+    } else {
+      setEarnedPoints(0);
+      localStorage.setItem("mm_sub_app_points", "0");
     }
     fetchPosts();
   }, []);
@@ -54,13 +62,33 @@ export default function Home() {
     }
   };
 
-  // Ads Click & 10s Processing Logic (0/10 System, Random 1-10 Points)
-  const handleWatchAd = () => {
+  // Post တင်ရန် Ads (0/3) Logic
+  const handleWatchPostAd = () => {
+    if (postAdCount >= 3) return;
+    setIsProcessingPostAd(true);
+    setPostAdCountdown(10);
+
+    window.open("https://www.profitablecpmrate.com", "_blank");
+
+    const timer = setInterval(() => {
+      setPostAdCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsProcessingPostAd(false);
+          setPostAdCount((c) => c + 1);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Ads ကဏ္ဍ Click (0/10) Logic
+  const handleWatchMainAd = () => {
     if (adClickCount >= 10) return;
     setIsProcessingAd(true);
     setCountdown(10);
 
-    // HilltopAds Direct Link
     window.open("https://www.profitablecpmrate.com", "_blank");
 
     const timer = setInterval(() => {
@@ -70,12 +98,12 @@ export default function Home() {
           setIsProcessingAd(false);
           const newCount = adClickCount + 1;
           setAdClickCount(newCount);
-          
-          // Random 1 to 10 points
-          const randomPts = Math.floor(Math.random() * 10) + 1;
-          const updatedTotal = earnedPoints + randomPts;
-          updatePoints(updatedTotal);
 
+          if (newCount === 10) {
+            const randomPts = Math.floor(Math.random() * 10) + 1;
+            updatePoints(earnedPoints + randomPts);
+            setAdClickCount(0); // Reset count after completion
+          }
           return 0;
         }
         return prev - 1;
@@ -83,8 +111,15 @@ export default function Home() {
     }, 1000);
   };
 
+  // အောက်က လင့်ခ် ၂ ခု နှိပ်ပါက +1 Point ပေါင်းခြင်း
+  const handleDirectLinkClick = (url: string) => {
+    window.open(url, "_blank");
+    updatePoints(earnedPoints + 1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (postAdCount < 3) return;
     setLoading(true);
 
     try {
@@ -99,6 +134,8 @@ export default function Home() {
         setTitle("");
         setContent("");
         setFile(null);
+        setPostAdCount(0); // Reset task
+        updatePoints(earnedPoints + 1); // Post တင်ပြီးပါက 1 Point ပေါင်းပေးခြင်း
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
         setActiveCategory(null);
@@ -247,7 +284,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ကာလာစုံ Menu Dropdown (အရောင်စုံ သပ်ရပ်သော ပုံစံ) */}
+      {/* Menu Dropdown */}
       {showMenu && (
         <div style={{ position: "absolute", top: "55px", right: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "6px", zIndex: 100, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", width: "170px", display: "flex", flexDirection: "column", gap: "4px" }}>
           <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>1- Post တင်ရန်</button>
@@ -265,11 +302,23 @@ export default function Home() {
       {/* Main Content Area */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Post Form (Modern Pill/Card Selection ဒီဇိုင်းဖြင့် Category ရွေးချယ်ခြင်း) */}
+        {/* Post Form (0/3 Task) */}
         {activeCategory === "post" && (
           <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
             <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Post အသစ်ဖန်တီးရန်</h3>
-            
+
+            <div style={{ background: "#fff3cd", padding: "10px", borderRadius: "6px", marginBottom: "12px", border: "1px solid #ffeeba", fontSize: "13px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
+                <span>Ads ကြည့်ရန် တာဝန်: <b>({postAdCount}/3)</b></span>
+                {postAdCount < 3 && (
+                  <button type="button" onClick={handleWatchPostAd} disabled={isProcessingPostAd} style={{ background: "#ffc107", border: "none", padding: "6px 12px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}>
+                    {isProcessingPostAd ? `Processing (${postAdCountdown}s)...` : "Ads ကြည့်မည်"}
+                  </button>
+                )}
+              </div>
+              {isProcessingPostAd && <p style={{ color: "#856404", margin: "5px 0 0 0" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးပါမည်...</p>}
+            </div>
+
             <label style={{ fontSize: "13px", fontWeight: "bold", color: "#4a5568", display: "block", marginBottom: "5px" }}>
               ကဏ္ဍ (Category) ရွေးချယ်ရန်:
             </label>
@@ -295,8 +344,7 @@ export default function Home() {
                     fontWeight: "bold",
                     fontSize: "12px",
                     cursor: "pointer",
-                    textAlign: "center",
-                    transition: "all 0.2s"
+                    textAlign: "center"
                   }}
                 >
                   {item.label}
@@ -329,20 +377,20 @@ export default function Home() {
             />
             <button
               type="submit"
-              disabled={loading}
-              style={{ width: "100%", padding: "12px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: "pointer" }}
+              disabled={loading || postAdCount < 3}
+              style={{ width: "100%", padding: "12px", backgroundColor: postAdCount < 3 ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: postAdCount < 3 ? "not-allowed" : "pointer" }}
             >
-              {loading ? "တင်နေသည်..." : "Post တင်မည်"}
+              {loading ? "တင်နေသည်..." : postAdCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည် (+1 Point)"}
             </button>
           </form>
         )}
 
-        {/* Ads ကဏ္ဍ ((0/10) System, Random 1-10 Points နှင့် 10s Processing) */}
+        {/* Ads ကဏ္ဍ */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-            <h2>📢 Ads & Points (0/10)</h2>
+            <h2>📢 Ads & Points</h2>
             <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 15px", borderRadius: "8px", display: "inline-block", margin: "10px 0", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
-              💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints} Points
+              💰 Points: {earnedPoints}
             </div>
 
             <div style={{ background: "#fff3cd", padding: "12px", borderRadius: "8px", margin: "15px 0", border: "1px solid #ffeeba", fontSize: "13px" }}>
@@ -350,7 +398,7 @@ export default function Home() {
                 <span>Ads ကြည့်ရန် (Click): <b>({adClickCount}/10)</b></span>
                 <button 
                   type="button" 
-                  onClick={handleWatchAd} 
+                  onClick={handleWatchMainAd} 
                   disabled={isProcessingAd || adClickCount >= 10} 
                   style={{ background: "#ffc107", border: "none", padding: "6px 14px", borderRadius: "6px", fontWeight: "bold", cursor: adClickCount >= 10 ? "not-allowed" : "pointer" }}
                 >
@@ -360,21 +408,19 @@ export default function Home() {
               {isProcessingAd && <p style={{ color: "#856404", margin: "5px 0 0 0" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
             </div>
 
-            <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ (1 မှ 10 ထထိ Random) Points အမှတ်များ စုဆောင်းနိုင်ပါသည် -</p>
-            <a 
-              href="https://www.profitablecpmrate.com" 
-              target="_blank" 
-              style={{ display: "block", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold", marginBottom: "10px" }}
+            <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ Points အမှတ်များ စုဆောင်းနိုင်ပါသည် -</p>
+            <button 
+              onClick={() => handleDirectLinkClick("https://www.profitablecpmrate.com")}
+              style={{ display: "block", width: "100%", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", border: "none", fontWeight: "bold", marginBottom: "10px", cursor: "pointer" }}
             >
-              🔥 Points ရယူရန် လင့်ခ် (၁)
-            </a>
-            <a 
-              href="https://www.profitablecpmrate.com" 
-              target="_blank" 
-              style={{ display: "block", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold" }}
+              🔥 Points ရယူရန် လင့်ခ် (၁) (+1 Point)
+            </button>
+            <button 
+              onClick={() => handleDirectLinkClick("https://www.profitablecpmrate.com")}
+              style={{ display: "block", width: "100%", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", border: "none", fontWeight: "bold", cursor: "pointer" }}
             >
-              ⭐ Points ရယူရန် လင့်ခ် (၂)
-            </a>
+              ⭐ Points ရယူရန် လင့်ခ် (၂) (+1 Point)
+            </button>
           </div>
         )}
 
@@ -400,7 +446,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Recent Posts Feed (1s အတွင်း အမြန်ဆုံး တန်းပွင့်စေရန် Optimize ပြုလုပ်ထားသည်) */}
+        {/* Recent Posts Feed */}
         {activeCategory !== "post" && activeCategory !== "ads" && activeCategory !== "about" && (
           <>
             <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>
@@ -504,7 +550,7 @@ export default function Home() {
 
       </div>
 
-      {/* Floating Top Up Button */}
+      {/* Top Button */}
       <button
         onClick={scrollToTop}
         style={{
@@ -528,4 +574,4 @@ export default function Home() {
 
     </div>
   );
-          }
+}
