@@ -25,20 +25,6 @@ export async function POST(req: Request) {
     if (contentType.includes("application/json")) {
       const body = await req.json();
 
-      // Upvote တိုးခြင်း
-      if (body.action === "upvote") {
-        const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
-          method: "PATCH",
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ upvotes: (body.currentUpvotes || 0) + 1 }),
-        });
-        return NextResponse.json({ success: updateRes.ok });
-      }
-
       // View တိုးခြင်း
       if (body.action === "incrementView") {
         const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
@@ -55,6 +41,9 @@ export async function POST(req: Request) {
 
       // Comment တင်ခြင်း
       if (body.action === "comment") {
+        if (!body.content || !body.content.trim()) {
+          return NextResponse.json({ error: "Empty comment" }, { status: 400 });
+        }
         const commentRes = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
           method: "POST",
           headers: {
@@ -64,26 +53,32 @@ export async function POST(req: Request) {
           },
           body: JSON.stringify({
             post_id: body.postId,
-            content: body.content,
+            content: body.content.trim(),
           }),
         });
         return NextResponse.json({ success: commentRes.ok });
       }
     }
 
-    // Post အသစ် တင်ခြင်း
+    // Post အသစ် တင်ခြင်း (Server-side validation)
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
+    const category = (formData.get("category") as string) || "funny";
     const file = formData.get("file") as File | null;
 
-    let imageUrl = "";
+    if (!title || !content) {
+      return NextResponse.json({ error: "Title and content are required" }, { status: 400 });
+    }
 
+    let imageUrl = "";
     if (file && file.size > 0) {
+      // ဖိုင်အရွယ်အစားကို ကန့်သတ်ခြင်း (Max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        return NextResponse.json({ error: "File size too large" }, { status: 400 });
+      }
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-      
-      // ပုံသေချာပေါ်စေရန် Base64 format သို့ တိုက်ရိုက်ပြောင်းပေးခြင်း
       const base64Image = buffer.toString("base64");
       const mimeType = file.type || "image/jpeg";
       imageUrl = `data:${mimeType};base64,${base64Image}`;
@@ -98,10 +93,10 @@ export async function POST(req: Request) {
         Prefer: "return=representation",
       },
       body: JSON.stringify({
-        title,
-        content,
+        title: title.trim(),
+        content: content.trim(),
+        category,
         image_url: imageUrl || null,
-        upvotes: 0,
         views: 0,
       }),
     });
