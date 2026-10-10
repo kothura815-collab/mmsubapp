@@ -21,6 +21,9 @@ export default function Home() {
   const [countdown, setCountdown] = useState(10);
   const [earnedPoints, setEarnedPoints] = useState(0);
 
+  // Custom Notification Toast State (ရုပ်ဆိုးသော alert အစား လှပသော Noti)
+  const [toastMessage, setToastMessage] = useState("");
+
   // UI Toggles
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
   const [showComments, setShowComments] = useState<{ [key: number]: boolean }>({});
@@ -36,6 +39,13 @@ export default function Home() {
     }
     fetchPosts();
   }, []);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage("");
+    }, 3500);
+  };
 
   const updatePoints = (newPts: number) => {
     setEarnedPoints(newPts);
@@ -74,7 +84,7 @@ export default function Home() {
             const randomPts = Math.floor(Math.random() * 3) + 1;
             const updatedTotal = earnedPoints + randomPts;
             updatePoints(updatedTotal);
-            alert(`ဂုဏ်ယူပါတယ်! ကြော်ငြာ ၃ ခု ကြည့်ရှုပြီးပါပြီ။ 💰 ${randomPts} ပွိုင့် ရရှိထားပါသည်။ စုစုပေါင်း: ${updatedTotal} ပွိုင့်`);
+            showToast(`🎉 ဂုဏ်ယူပါတယ်! ကြော်ငြာ ၃ ခု ကြည့်ပြီးပါပြီ။ 💰 ${randomPts} ပွိုင့် ရရှိပါသည်။ (စုစုပေါင်း: ${updatedTotal} ပွိုင့်)`);
           }
           return 0;
         }
@@ -86,7 +96,7 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adWatchCount < 3) {
-        alert("ကျေးဇူးပြု၍ ပို့စ်မတင်မီ ကြော်ငြာ (3) ကြိမ် အရင်ကြည့်ရှုပေးပါရန်။");
+        showToast("⚠️ ကျေးဇူးပြု၍ ပို့စ်မတင်မီ ကြော်ငြာ (3) ကြိမ် အရင်ကြည့်ရှုပေးပါရန်။");
         return;
     }
     setLoading(true);
@@ -106,15 +116,15 @@ export default function Home() {
         setAdWatchCount(0);
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
-        alert("ပို့စ်တင်ခြင်း အောင်မြင်ပါသည်။");
+        showToast("✅ ပို့စ်တင်ခြင်း အောင်မြင်ပါသည်။");
         setActiveCategory(null);
         setActiveCategoryLabel("");
       } else {
         const errData = await res.json();
-        alert("Error: " + (errData.error || "Failed to post"));
+        showToast("❌ Error: " + (errData.error || "Failed to post"));
       }
     } catch (err: any) {
-      alert("Error: " + err.message);
+      showToast("❌ Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -124,12 +134,14 @@ export default function Home() {
     setActiveCategory(catKey);
     setActiveCategoryLabel(label);
     setShowMenu(false);
+    scrollToTop();
   };
 
   const handleBackToHome = () => {
     setActiveCategory(null);
     setActiveCategoryLabel("");
     setShowMenu(false);
+    scrollToTop();
   };
 
   const scrollToTop = () => {
@@ -144,21 +156,22 @@ export default function Home() {
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Link ကူးယူပြီးပါပြီ။");
+      showToast("🔗 Link ကူးယူပြီးပါပြီ။");
     }
   };
 
-  const handleToggleExpand = async (postId: number, currentViews: number) => {
+  const handleToggleExpand = (postId: number, currentViews: number) => {
     const isCurrentlyExpanded = expandedPosts[postId];
-    setExpandedPosts((prev) => ({ ...prev, [postId]: !isCurrentlyExpanded }));
+    
+    // တစ်ခုကို နှိပ်လိုက်ရင် အခြားဖွင့်ထားတာတွေကို ပိတ်ပြီး ဒါကိုပဲ ချဲ့မည် (သို့ ပြန်ချုံ့မည်)
+    setExpandedPosts({ [postId]: !isCurrentlyExpanded });
 
     if (!isCurrentlyExpanded) {
-      await fetch("/api/posts", {
+      fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "incrementView", postId, currentViews }),
-      });
-      fetchPosts();
+      }).then(() => fetchPosts());
     }
   };
 
@@ -170,9 +183,8 @@ export default function Home() {
     const commentText = commentInputs[postId];
     if (!commentText || !commentText.trim()) return;
 
-    // Send နှိပ်လိုက်သည်နှင့် Post ကို အလိုအလျောက် ပြန်ချုံ့မည်
-    setExpandedPosts((prev) => ({ ...prev, [postId]: false }));
-    setShowComments((prev) => ({ ...prev, [postId]: false }));
+    setExpandedPosts({});
+    setShowComments({});
 
     await fetch("/api/posts", {
       method: "POST",
@@ -182,10 +194,39 @@ export default function Home() {
 
     setCommentInputs({ ...commentInputs, [postId]: "" });
     fetchPosts();
+    showToast("💬 Comment တင်ပြီးပါပြီ။");
   };
 
   const handleContactAdmin = () => {
     window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer");
+  };
+
+  // Telegram လင့်ခ်များကို ကလစ်နှိပ်လို့ရအောင် format လုပ်ပေးသော function
+  const renderFormattedContent = (text: string, isExpanded: boolean) => {
+    if (!text) return "";
+    const isLongText = text.length > 80;
+    const rawDisplay = isExpanded || !isLongText ? text : text.substring(0, 80) + "...";
+
+    // URL များကို <a> tag သို့ ပြောင်းပေးခြင်း
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = rawDisplay.split(urlRegex);
+
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "#0070f3", textDecoration: "underline", wordBreak: "break-all" }}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
   };
 
   const filteredPosts = !activeCategory || activeCategory === "all"
@@ -196,8 +237,15 @@ export default function Home() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
       <div ref={topRef}></div>
 
+      {/* လှပသော Custom Notification Toast */}
+      {toastMessage && (
+        <div style={{ position: "fixed", top: "20px", left: "50%", transform: "translateX(-50%)", background: "#2d3748", color: "#fff", padding: "10px 20px", borderRadius: "8px", zIndex: 1000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)", fontSize: "14px", fontWeight: "bold", textAlign: "center", maxWidth: "90%" }}>
+          {toastMessage}
+        </div>
+      )}
+
       {/* Header Area */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
         <div>
           <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
           <div style={{ display: "inline-block", background: "#fffaf0", border: "1px solid #ecc94b", color: "#744210", padding: "2px 8px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", marginTop: "4px" }}>
@@ -226,7 +274,7 @@ export default function Home() {
 
       {/* ကျစ်လစ်အကွက်အသေး Dropdown Menu (Width 160px) */}
       {showMenu && (
-        <div style={{ position: "absolute", top: "50px", right: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "6px", zIndex: 100, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", width: "160px", display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div style={{ position: "absolute", top: "55px", right: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "6px", zIndex: 100, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", width: "160px", display: "flex", flexDirection: "column", gap: "4px" }}>
           <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>1- Post တင်ရန်</button>
           <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>2- Social News</button>
           <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>3- တင်ချင်ရာတင်</button>
@@ -352,7 +400,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Recent Posts Feed */}
+        {/* Recent Posts Feed (ညီညာသပ်ရပ်စွာ ပြသခြင်း) */}
         {activeCategory !== "post" && activeCategory !== "ads" && activeCategory !== "about" && (
           <>
             <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>
@@ -365,11 +413,10 @@ export default function Home() {
               filteredPosts.map((post) => {
                 const isExpanded = expandedPosts[post.id];
                 const isLongText = post.content.length > 80;
-                const displayContent = isExpanded || !isLongText ? post.content : post.content.substring(0, 80) + "...";
                 const isCommentsOpen = showComments[post.id];
 
                 return (
-                  <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff", boxShadow: "0 2px 4px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
+                  <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff", boxShadow: "0 2px 4px rgba(0,0,0,0.02)", boxSizing: "border-box", width: "100%" }}>
                     
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
@@ -388,14 +435,14 @@ export default function Home() {
                       </div>
                     )}
 
-                    <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.4", fontSize: "14px" }}>
-                      {displayContent}
+                    <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
+                      {renderFormattedContent(post.content, isExpanded)}
                       {isLongText && (
                         <span
                           onClick={() => handleToggleExpand(post.id, post.views || 0)}
                           style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
                         >
-                          {isExpanded ? "See less" : "See more"}
+                          {isExpanded ? " See less" : " See more"}
                         </span>
                       )}
                     </p>
@@ -457,7 +504,7 @@ export default function Home() {
 
       </div>
 
-      {/* Top သို့ အလွယ်တကူ ပြန်တက်နိုင်သည့် Floating Button */}
+      {/* Top သို့ အလွယ်တကူ ပြန်တက်နိုင်သည့် Floating Top Up Button */}
       <button
         onClick={scrollToTop}
         style={{
@@ -481,4 +528,4 @@ export default function Home() {
 
     </div>
   );
-      }
+        }
