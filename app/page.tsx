@@ -15,14 +15,11 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Ad Task State & Persistent Points
+  // Ad Task State & Persistent Points (localStorage)
   const [adWatchCount, setAdWatchCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [earnedPoints, setEarnedPoints] = useState(0);
-
-  // Custom Notification Toast State (ရုပ်ဆိုးသော alert အစား လှပသော Noti)
-  const [toastMessage, setToastMessage] = useState("");
 
   // UI Toggles
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
@@ -39,13 +36,6 @@ export default function Home() {
     }
     fetchPosts();
   }, []);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage("");
-    }, 3500);
-  };
 
   const updatePoints = (newPts: number) => {
     setEarnedPoints(newPts);
@@ -84,7 +74,6 @@ export default function Home() {
             const randomPts = Math.floor(Math.random() * 3) + 1;
             const updatedTotal = earnedPoints + randomPts;
             updatePoints(updatedTotal);
-            showToast(`🎉 ဂုဏ်ယူပါတယ်! ကြော်ငြာ ၃ ခု ကြည့်ပြီးပါပြီ။ 💰 ${randomPts} ပွိုင့် ရရှိပါသည်။ (စုစုပေါင်း: ${updatedTotal} ပွိုင့်)`);
           }
           return 0;
         }
@@ -96,8 +85,7 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adWatchCount < 3) {
-        showToast("⚠️ ကျေးဇူးပြု၍ ပို့စ်မတင်မီ ကြော်ငြာ (3) ကြိမ် အရင်ကြည့်ရှုပေးပါရန်။");
-        return;
+      return;
     }
     setLoading(true);
 
@@ -116,15 +104,11 @@ export default function Home() {
         setAdWatchCount(0);
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
-        showToast("✅ ပို့စ်တင်ခြင်း အောင်မြင်ပါသည်။");
         setActiveCategory(null);
         setActiveCategoryLabel("");
-      } else {
-        const errData = await res.json();
-        showToast("❌ Error: " + (errData.error || "Failed to post"));
       }
     } catch (err: any) {
-      showToast("❌ Error: " + err.message);
+      console.error("Submit Error:", err);
     } finally {
       setLoading(false);
     }
@@ -144,7 +128,10 @@ export default function Home() {
     scrollToTop();
   };
 
+  // Top Up နှိပ်ပါက အကုန်ပြန်ချုံ့ပြီး အပေါ်ဆုံးသို့ ရောက်ရှိမည်
   const scrollToTop = () => {
+    setExpandedPosts({});
+    setShowComments({});
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -156,14 +143,13 @@ export default function Home() {
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      showToast("🔗 Link ကူးယူပြီးပါပြီ။");
     }
   };
 
   const handleToggleExpand = (postId: number, currentViews: number) => {
     const isCurrentlyExpanded = expandedPosts[postId];
     
-    // တစ်ခုကို နှိပ်လိုက်ရင် အခြားဖွင့်ထားတာတွေကို ပိတ်ပြီး ဒါကိုပဲ ချဲ့မည် (သို့ ပြန်ချုံ့မည်)
+    // နောက်ပို့စ်သို့ ပြောင်းမှသာ ယခင်ချဲ့ထားသည်များကို ပိတ်မည် (Auto-collapse on switch)
     setExpandedPosts({ [postId]: !isCurrentlyExpanded });
 
     if (!isCurrentlyExpanded) {
@@ -179,35 +165,46 @@ export default function Home() {
     setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
+  // Comment ရေးနေစဉ် မချုံ့ဘဲ 1s အတွင်း ချက်ချင်းရောက်စေရန် (Optimistic UI Update)
   const handleCommentSubmit = async (postId: number) => {
     const commentText = commentInputs[postId];
     if (!commentText || !commentText.trim()) return;
 
-    setExpandedPosts({});
-    setShowComments({});
+    // 1. မျက်နှာပြင်ပေါ်သို့ ချက်ချင်း တန်းပေါ်လာစေရန် (Optimistic UI)
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            comments: [...(p.comments || []), { id: Date.now(), content: commentText.trim() }],
+          };
+        }
+        return p;
+      })
+    );
 
+    // 2. Input box ကိုသာ ရှင်းလင်းမည် (Comment box နှင့် Post ကို မပိတ်ပါ - ဆက်လက် စကားပြောနိုင်ရန်)
+    setCommentInputs({ ...commentInputs, [postId]: "" });
+
+    // 3. Server သို့ Background မှ သိမ်းဆည်းရန် ပို့မည်
     await fetch("/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "comment", postId, content: commentText.trim() }),
     });
 
-    setCommentInputs({ ...commentInputs, [postId]: "" });
     fetchPosts();
-    showToast("💬 Comment တင်ပြီးပါပြီ။");
   };
 
   const handleContactAdmin = () => {
     window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer");
   };
 
-  // Telegram လင့်ခ်များကို ကလစ်နှိပ်လို့ရအောင် format လုပ်ပေးသော function
   const renderFormattedContent = (text: string, isExpanded: boolean) => {
     if (!text) return "";
     const isLongText = text.length > 80;
     const rawDisplay = isExpanded || !isLongText ? text : text.substring(0, 80) + "...";
 
-    // URL များကို <a> tag သို့ ပြောင်းပေးခြင်း
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = rawDisplay.split(urlRegex);
 
@@ -237,13 +234,6 @@ export default function Home() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
       <div ref={topRef}></div>
 
-      {/* လှပသော Custom Notification Toast */}
-      {toastMessage && (
-        <div style={{ position: "fixed", top: "20px", left: "50%", transform: "translateX(-50%)", background: "#2d3748", color: "#fff", padding: "10px 20px", borderRadius: "8px", zIndex: 1000, boxShadow: "0 4px 12px rgba(0,0,0,0.2)", fontSize: "14px", fontWeight: "bold", textAlign: "center", maxWidth: "90%" }}>
-          {toastMessage}
-        </div>
-      )}
-
       {/* Header Area */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
         <div>
@@ -272,7 +262,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ကျစ်လစ်အကွက်အသေး Dropdown Menu (Width 160px) */}
+      {/* Dropdown Menu (Compact 160px) */}
       {showMenu && (
         <div style={{ position: "absolute", top: "55px", right: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "6px", zIndex: 100, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", width: "160px", display: "flex", flexDirection: "column", gap: "4px" }}>
           <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>1- Post တင်ရန်</button>
@@ -310,7 +300,7 @@ export default function Home() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc" }}
+              style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "6px", border: "1px solid #ccc", background: "#fff", fontSize: "14px", color: "#333" }}
             >
               <option value="social_news">Social News</option>
               <option value="whatever">တင်ချင်ရာတင်</option>
@@ -360,20 +350,20 @@ export default function Home() {
             <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 15px", borderRadius: "8px", display: "inline-block", margin: "10px 0", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
               💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints} Points
             </div>
-            <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ အမှတ်များနှင့် ဝင်ငွေများ ရှာဖွေနိုင်ပါသည် -</p>
+            <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ Points အမှတ်များ စုဆောင်းနိုင်ပါသည် -</p>
             <a 
               href="https://www.profitablecpmrate.com" 
               target="_blank" 
               style={{ display: "block", background: "#e53e3e", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold", marginBottom: "10px" }}
             >
-              🔥 Ads ကြည့်ပြီး ငွေရှာရန် လင့်ခ် (၁)
+              🔥 Points ရယူရန် လင့်ခ် (၁)
             </a>
             <a 
               href="https://www.profitablecpmrate.com" 
               target="_blank" 
               style={{ display: "block", background: "#3182ce", color: "#fff", padding: "12px", borderRadius: "8px", textDecoration: "none", fontWeight: "bold" }}
             >
-              ⭐ Ads ကြည့်ပြီး ငွေရှာရန် လင့်ခ် (၂)
+              ⭐ Points ရယူရန် လင့်ခ် (၂)
             </a>
           </div>
         )}
@@ -400,7 +390,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Recent Posts Feed (ညီညာသပ်ရပ်စွာ ပြသခြင်း) */}
+        {/* Recent Posts Feed */}
         {activeCategory !== "post" && activeCategory !== "ads" && activeCategory !== "about" && (
           <>
             <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>
@@ -504,7 +494,7 @@ export default function Home() {
 
       </div>
 
-      {/* Top သို့ အလွယ်တကူ ပြန်တက်နိုင်သည့် Floating Top Up Button */}
+      {/* Floating Top Up Button */}
       <button
         onClick={scrollToTop}
         style={{
