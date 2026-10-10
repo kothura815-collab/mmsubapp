@@ -29,9 +29,10 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
+  // Fast Fetch Posts with Cache Optimization
   const fetchPosts = async () => {
     try {
-      const res = await fetch("/api/posts");
+      const res = await fetch("/api/posts", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) setPosts(data);
@@ -152,18 +153,31 @@ export default function Home() {
     setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
+  // Instant UI Update for Comments (Fast Response)
   const handleCommentSubmit = async (postId: number) => {
     const commentText = commentInputs[postId];
     if (!commentText || !commentText.trim()) return;
 
-    await fetch("/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "comment", postId, content: commentText }),
-    });
+    // Optimistic UI update
+    setPosts(posts.map(p => {
+      if (p.id === postId) {
+        return {
+          ...p,
+          comments: [...(p.comments || []), { id: Date.now(), content: commentText.trim() }]
+        };
+      }
+      return p;
+    }));
 
     setCommentInputs({ ...commentInputs, [postId]: "" });
     setShowComments((prev) => ({ ...prev, [postId]: true }));
+
+    await fetch("/api/posts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "comment", postId, content: commentText.trim() }),
+    });
+
     fetchPosts();
   };
 
@@ -183,9 +197,9 @@ export default function Home() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
         <div>
           <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
-          {/* Menu အောက်တွင် ပွိုင့် Label လေး ထားရှိခြင်း */}
+          {/* MENU အောက်တွင် ရွှေအိတ်ပုံလေး (💰) နှင့် Points ဖော်ပြခြင်း */}
           <div style={{ display: "inline-block", background: "#f6e05e", color: "#744210", padding: "2px 8px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", marginTop: "4px" }}>
-            ⭐ Points: {earnedPoints}
+            💰 Points: {earnedPoints}
           </div>
         </div>
 
@@ -208,46 +222,18 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Menu Label/Dropdown Box (အကွက်သေးသေး အပေါ်ကနေ ထပ်ပေါ်သည့် ပုံစံ) */}
+      {/* Menu Dropdown Box */}
       {showMenu && (
         <div style={{ position: "absolute", top: "60px", right: "10px", left: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "10px", zIndex: 100, boxShadow: "0 10px 25px rgba(0,0,0,0.2)", display: "grid", gridTemplateColumns: "1fr", gap: "6px" }}>
-          
-          <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            1- Post တင်ရန်
-          </button>
-
-          <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            2- Social News
-          </button>
-
-          <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            3- တင်ချင်ရာတင်
-          </button>
-
-          <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            4- ရပ်ကွက်သတင်း
-          </button>
-
-          <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            5- ရင်ဖွင့်ရာ
-          </button>
-
-          <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            6- ဇာတ်ကားအညွှန်း
-          </button>
-
-          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            7- ဝတ္ထု ဖတ်ရန်
-          </button>
-
-          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            8- Ads
-          </button>
-
-          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>
-            9- About & Admin
-          </button>
-
+          <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>1- Post တင်ရန်</button>
+          <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>2- Social News</button>
+          <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>3- တင်ချင်ရာတင်</button>
+          <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>4- ရပ်ကွက်သတင်း</button>
+          <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>5- ရင်ဖွင့်ရာ</button>
+          <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>6- ဇာတ်ကားအညွှန်း</button>
+          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>7- ဝတ္ထု ဖတ်ရန်</button>
+          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>8- Ads</button>
+          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px", textAlign: "left" }}>9- About & Admin</button>
         </div>
       )}
 
@@ -257,7 +243,7 @@ export default function Home() {
         {/* Post Form */}
         {activeCategory === "post" && (
           <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Post အသစ်ဖန်တီးရန် (Points: {earnedPoints})</h3>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Post အသစ်ဖန်တီးရန် (💰 Points: {earnedPoints})</h3>
             
             <div style={{ background: "#fff3cd", padding: "10px", borderRadius: "6px", marginBottom: "10px", border: "1px solid #ffeeba", fontSize: "13px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
@@ -317,12 +303,12 @@ export default function Home() {
           </form>
         )}
 
-        {/* Ads ကဏ္ဍ (Recent Posts ပြသခြင်း မရှိပါ) */}
+        {/* Ads ကဏ္ဍ (အမှန်တကယ် ပွိုင့်များကို ဤနေရာတွင် ရွှေအိတ်ပုံလေးနှင့် ဖော်ပြမည်) */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
             <h2>📢 Ads & Points View</h2>
-            <div style={{ background: "#fefcbf", border: "1px solid #faf089", padding: "8px", borderRadius: "6px", display: "inline-block", margin: "10px 0", fontWeight: "bold", color: "#744210" }}>
-              လက်ရှိ ရရှိထားသော Points: {earnedPoints} Points
+            <div style={{ background: "#fefcbf", border: "1px solid #faf089", padding: "10px 15px", borderRadius: "8px", display: "inline-block", margin: "10px 0", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
+              💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints} Points
             </div>
             <p style={{ color: "#666", fontSize: "14px", margin: "10px 0 20px 0" }}>အောက်ပါလင့်ခ်များကို နှိပ်၍ ကြော်ငြာများကြည့်ရှုကာ အမှတ်များနှင့် ဝင်ငွေများ ရှာဖွေနိုင်ပါသည် -</p>
             <a 
@@ -342,7 +328,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* About & Admin ကဏ္ဍ (Recent Posts ပြသခြင်း မရှိပါ) */}
+        {/* About & Admin ကဏ္ဍ */}
         {activeCategory === "about" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
             <h2 style={{ marginTop: 0 }}>About & Admin Support</h2>
@@ -448,7 +434,7 @@ export default function Home() {
                             placeholder="Write a comment..."
                             value={commentInputs[post.id] || ""}
                             onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                            style={{ flex: 1, padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }}
+                            style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }}
                           />
                           <button
                             onClick={() => handleCommentSubmit(post.id)}
@@ -470,4 +456,4 @@ export default function Home() {
       </div>
     </div>
   );
-          }
+    }
