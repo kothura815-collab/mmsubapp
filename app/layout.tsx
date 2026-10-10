@@ -41,9 +41,9 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-        {/* --- RichAds In-Page Push Script --- */}
+        {/* --- RichAds In-Page Push Script (Updated to siteid=409679) --- */}
         <Script
-          src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409678"
+          src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679"
           strategy="afterInteractive"
         />
       </head>
