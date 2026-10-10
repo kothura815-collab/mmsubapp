@@ -15,7 +15,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Ad Task State & Persistent Points (localStorage ဖြင့် သိမ်းဆည်းခြင်း)
+  // Ad Task State & Persistent Points
   const [adWatchCount, setAdWatchCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -29,7 +29,6 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // LocalStorage မှ Points များကို အစကတည်းက ဖတ်ယူခြင်း
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
     if (savedPoints) {
@@ -38,8 +37,7 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  // Points အပြောင်းအလဲရှိတိုင်း localStorage တွင် မှတ်သားခြင်း
-  const updatePointsnew = (newPts: number) => {
+  const updatePoints = (newPts: number) => {
     setEarnedPoints(newPts);
     localStorage.setItem("mm_sub_app_points", newPts.toString());
   };
@@ -75,7 +73,7 @@ export default function Home() {
           if (newCount === 3) {
             const randomPts = Math.floor(Math.random() * 3) + 1;
             const updatedTotal = earnedPoints + randomPts;
-            updatePointsnew(updatedTotal);
+            updatePoints(updatedTotal);
             alert(`ဂုဏ်ယူပါတယ်! ကြော်ငြာ ၃ ခု ကြည့်ရှုပြီးပါပြီ။ 💰 ${randomPts} ပွိုင့် ရရှိထားပါသည်။ စုစုပေါင်း: ${updatedTotal} ပွိုင့်`);
           }
           return 0;
@@ -134,6 +132,10 @@ export default function Home() {
     setShowMenu(false);
   };
 
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const handleShare = (postTitle: string) => {
     if (navigator.share) {
       navigator.share({
@@ -148,8 +150,6 @@ export default function Home() {
 
   const handleToggleExpand = async (postId: number, currentViews: number) => {
     const isCurrentlyExpanded = expandedPosts[postId];
-    
-    // See More နှိပ်ပြီးပါက ပြန်ချုံ့ရန် (Collapse state toggle)
     setExpandedPosts((prev) => ({ ...prev, [postId]: !isCurrentlyExpanded }));
 
     if (!isCurrentlyExpanded) {
@@ -166,12 +166,11 @@ export default function Home() {
     setShowComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  // Comment ပို့ပြီးပါက Post ကို အလိုအလျောက် ပြန်ချုံ့ရန်
   const handleCommentSubmit = async (postId: number) => {
     const commentText = commentInputs[postId];
     if (!commentText || !commentText.trim()) return;
 
-    // Comment ပို့ပြီးတာနဲ့ ဒီ Post ကို ပြန်ချုံ့မည် (Collapse)
+    // Send နှိပ်လိုက်သည်နှင့် Post ကို အလိုအလျောက် ပြန်ချုံ့မည်
     setExpandedPosts((prev) => ({ ...prev, [postId]: false }));
     setShowComments((prev) => ({ ...prev, [postId]: false }));
 
@@ -201,7 +200,6 @@ export default function Home() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
         <div>
           <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
-          {/* ရွှေအိတ်ပုံလေးဖြင့် Points ပြသခြင်း */}
           <div style={{ display: "inline-block", background: "#fffaf0", border: "1px solid #ecc94b", color: "#744210", padding: "2px 8px", borderRadius: "12px", fontSize: "12px", fontWeight: "bold", marginTop: "4px" }}>
             💰 Points: {earnedPoints}
           </div>
@@ -226,18 +224,18 @@ export default function Home() {
         </div>
       </div>
 
-      {/* သပ်ရပ်လှပသော Menu Dropdown Label Box */}
+      {/* ကျစ်လစ်အကွက်အသေး Dropdown Menu (Width 160px) */}
       {showMenu && (
-        <div style={{ position: "absolute", top: "65px", right: "10px", left: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "8px", zIndex: 100, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", display: "grid", gridTemplateColumns: "1fr", gap: "5px" }}>
-          <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>1- Post တင်ရန်</button>
-          <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>2- Social News</button>
-          <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>3- တင်ချင်ရာတင်</button>
-          <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>4- ရပ်ကွက်သတင်း</button>
-          <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>5- ရင်ဖွင့်ရာ</button>
-          <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>6- ဇာတ်ကားအညွှန်း</button>
-          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>7- ဝတ္ထု ဖတ်ရန်</button>
-          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>8- Ads</button>
-          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "8px 10px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", textAlign: "left" }}>9- About & Admin</button>
+        <div style={{ position: "absolute", top: "50px", right: "10px", background: "#fff", border: "1px solid #cbd5e0", borderRadius: "8px", padding: "6px", zIndex: 100, boxShadow: "0 8px 20px rgba(0,0,0,0.15)", width: "160px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          <button onClick={() => handleSelectCategory("post", "Post တင်ရန်")} style={{ background: "#38a169", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>1- Post တင်ရန်</button>
+          <button onClick={() => handleSelectCategory("social_news", "Social News")} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>2- Social News</button>
+          <button onClick={() => handleSelectCategory("whatever", "တင်ချင်ရာတင်")} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>3- တင်ချင်ရာတင်</button>
+          <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>4- ရပ်ကွက်သတင်း</button>
+          <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>5- ရင်ဖွင့်ရာ</button>
+          <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>6- ဇာတ်ကားအညွှန်း</button>
+          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>7- ဝတ္ထု ဖတ်ရန်</button>
+          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>8- Ads</button>
+          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px 8px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", textAlign: "left" }}>9- About & Admin</button>
         </div>
       )}
 
@@ -307,7 +305,7 @@ export default function Home() {
           </form>
         )}
 
-        {/* Ads ကဏ္ဍ (ရွှေအိတ်ပုံ Label ဖြင့် သပ်ရပ်စွာ ပြသခြင်း) */}
+        {/* Ads ကဏ္ဍ */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
             <h2>📢 Ads & Points View</h2>
@@ -354,7 +352,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Posts Feed */}
+        {/* Recent Posts Feed */}
         {activeCategory !== "post" && activeCategory !== "ads" && activeCategory !== "about" && (
           <>
             <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>
@@ -458,6 +456,29 @@ export default function Home() {
         )}
 
       </div>
+
+      {/* Top သို့ အလွယ်တကူ ပြန်တက်နိုင်သည့် Floating Button */}
+      <button
+        onClick={scrollToTop}
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          background: "#0070f3",
+          color: "#fff",
+          border: "none",
+          padding: "8px 14px",
+          borderRadius: "20px",
+          fontWeight: "bold",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+          cursor: "pointer",
+          fontSize: "13px",
+          zIndex: 99
+        }}
+      >
+        ▲ Top
+      </button>
+
     </div>
   );
-}
+      }
