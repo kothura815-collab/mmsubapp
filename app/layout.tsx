@@ -17,15 +17,13 @@ export default function RootLayout({
         {/* HilltopAds Meta Tag Verification */}
         <meta name="hilltopads-site-verification" content="8f253bb9b8bac" />
 
-        {/* Step 1: Adcash Library Script */}
+        {/* --- Adcash Integration --- */}
         <Script
           id="aclib"
           src="//acscdn.com/script/aclib.js"
           strategy="beforeInteractive"
         />
-
-        {/* Step 2: Adcash AutoTag Runner Script */}
-        <Script id="accash-autotag" strategy="afterInteractive">
+        <Script id="adcash-autotag" strategy="afterInteractive">
           {`
             if (typeof aclib !== 'undefined') {
               aclib.runAutoTag({
@@ -34,6 +32,20 @@ export default function RootLayout({
             }
           `}
         </Script>
+
+        {/* --- RichAds Popunder Script --- */}
+        <Script
+          src="https://richinfo.co/richpartners/pops/js/richads-pu-ob.js"
+          data-pubid="1021768"
+          data-siteid="409677"
+          strategy="afterInteractive"
+        />
+
+        {/* --- RichAds In-Page Push Script --- */}
+        <Script
+          src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409678"
+          strategy="afterInteractive"
+        />
       </head>
       <body style={{ margin: 0, padding: 0, backgroundColor: "#fdfbf7" }}>
         {children}
