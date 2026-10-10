@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [showPostForm, setShowPostForm] = useState(false);
   
   // Post Form State
   const [title, setTitle] = useState("");
@@ -13,7 +14,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Ad Task & Posting Lock State (0/3 System)
+  // Ad Task State (0/3 System)
   const [adWatchCount, setAdWatchCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [countdown, setCountdown] = useState(10);
@@ -50,7 +51,7 @@ export default function Home() {
     setIsProcessingAd(true);
     setCountdown(10);
 
-    // HilltopAds / Direct link simulator (ပွင့်သွားစေရန်)
+    // ကိုယ့်ရဲ့ HilltopAds Direct Link ကို ဒီနေရာမှာ ထည့်ပါ
     window.open("https://www.profitablecpmrate.com", "_blank");
 
     const timer = setInterval(() => {
@@ -62,7 +63,6 @@ export default function Home() {
           setAdWatchCount(newCount);
           
           if (newCount === 3) {
-            // Random 1 to 3 points
             const randomPts = Math.floor(Math.random() * 3) + 1;
             setEarnedPoints((p) => p + randomPts);
             alert(`ဂုဏ်ယူပါတယ်! ကြော်ငြာ ၃ ခု ကြည့်ရှုပြီးပါပြီ။ ${randomPts} ပွိုင့် ရရှိထားပါသည်။ ယခု Post တင်နိုင်ပါပြီ။`);
@@ -74,7 +74,6 @@ export default function Home() {
     }, 1000);
   };
 
-  // Post တင်ခြင်း (Ad Task ပြီးမှ ခွင့်ပြုမည်)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adWatchCount < 3) {
@@ -95,7 +94,8 @@ export default function Home() {
         setTitle("");
         setContent("");
         setFile(null);
-        setAdWatchCount(0); // Reset task
+        setAdWatchCount(0);
+        setShowPostForm(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
         alert("ပို့စ်တင်ခြင်း အောင်မြင်ပါသည်။");
@@ -110,7 +110,6 @@ export default function Home() {
     }
   };
 
-  // Share Functionality
   const handleShare = (postTitle: string) => {
     if (navigator.share) {
       navigator.share({
@@ -161,38 +160,88 @@ export default function Home() {
     : posts.filter((p) => p.category === activeCategory);
 
   return (
-    <div style={{ maxWidth: "600px", margin: "10px auto", padding: "10px", fontFamily: "sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif" }}>
       <div ref={topRef}></div>
 
-      <h1 style={{ textAlign: "center", fontSize: "22px", marginBottom: "15px" }}>MM Sub App</h1>
+      {/* ဘယ်ဘက် စာအုပ်ဘ်ပုံစံ ကာလာစုံ Tabs (တစ်ခုနဲ့တစ်ခု ထပ်နေသော ပုံစံ - Overlap Stack) */}
+      <div style={{ width: "90px", display: "flex", flexDirection: "column", padding: "10px 0 10px 10px", position: "sticky", top: 0, height: "100vh", zIndex: 10 }}>
+        
+        <button 
+          onClick={() => { setActiveCategory("all"); setShowPostForm(false); setShowAbout(false); }}
+          style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          MENU
+        </button>
 
-      {/* စာအုပ်ဘ်ပုံစံ ကာလာစုံ Menu Tabs */}
-      <div style={{ display: "flex", gap: "5px", overflowX: "auto", paddingBottom: "10px", marginBottom: "15px" }}>
-        <button onClick={() => { setActiveCategory("all"); setShowAbout(false); }} style={{ background: "#0070f3", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", whiteSpace: "nowrap" }}>MENU</button>
-        <button onClick={() => { setActiveCategory("funny"); setShowAbout(false); }} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}>ဟာသ</button>
-        <button onClick={() => { setActiveCategory("novel"); setShowAbout(false); }} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}>ဝတ္ထု</button>
-        <button onClick={() => { setActiveCategory("news"); setShowAbout(false); }} style={{ background: "#805ad5", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}>ဆိုရှယ်သတင်း</button>
-        <button onClick={() => { setActiveCategory("movie"); setShowAbout(false); }} style={{ background: "#319795", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}>ဇာတ်ကား</button>
-        <button onClick={() => { setActiveCategory("game"); setShowAbout(false); }} style={{ background: "#2d3748", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}>Games</button>
-        <button onClick={() => setShowAbout(true)} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", whiteSpace: "nowrap" }}>About / အသုံးပြုပုံ</button>
-        <a href="https://t.me/your_admin_username" target="_blank" style={{ background: "#718096", color: "#fff", textDecoration: "none", padding: "8px 12px", borderRadius: "6px", fontSize: "13px", display: "flex", alignItems: "center", whiteSpace: "nowrap" }}>Admin ကိုအကြောင်းကြားရန်</a>
+        <button 
+          onClick={() => { setShowPostForm(!showPostForm); setShowAbout(false); }}
+          style={{ background: "#38a169", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          POST
+        </button>
+
+        <button 
+          onClick={() => { setActiveCategory("news"); setShowPostForm(false); setShowAbout(false); }}
+          style={{ background: "#805ad5", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          Social New
+        </button>
+
+        <button 
+          onClick={() => { setActiveCategory("novel"); setShowPostForm(false); setShowAbout(false); }}
+          style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          ဝတ္ထု
+        </button>
+
+        <button 
+          onClick={() => { setActiveCategory("funny"); setShowPostForm(false); setShowAbout(false); }}
+          style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "12px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          ဟာသ
+        </button>
+
+        <button 
+          onClick={() => { setActiveCategory("movie"); setShowPostForm(false); setShowAbout(false); }}
+          style={{ background: "#744210", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          ဖျော်ဖြေရေး
+        </button>
+
+        <button 
+          onClick={() => { setActiveCategory("game"); setShowPostForm(false); setShowAbout(false); }}
+          style={{ background: "#1a202c", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "10px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          GAMES/CHAI
+        </button>
+
+        <button 
+          onClick={() => { setShowAbout(true); setShowPostForm(false); }}
+          style={{ background: "#3182ce", color: "#fff", border: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", cursor: "pointer", fontWeight: "bold", fontSize: "11px", marginBottom: "-4px", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", textAlign: "left" }}
+        >
+          About
+        </button>
+
+        {/* အောက်ဆုံးတွင် Admin သို့ အကြောင်းကြားရန် လင့်ခ် */}
+        <a 
+          href="https://t.me/your_admin_username" 
+          target="_blank" 
+          style={{ background: "#4a5568", color: "#fff", textDecoration: "none", padding: "12px 8px", borderRadius: "8px 0 0 8px", fontSize: "10px", fontWeight: "bold", boxShadow: "-2px 2px 5px rgba(0,0,0,0.1)", display: "block", textAlign: "left" }}
+        >
+          Admin အကြောင်းကြား
+        </a>
       </div>
 
-      {/* About Section */}
-      {showAbout ? (
-        <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
-          <h2>အသုံးပြုပုံ အကျဉ်းချုပ် (About & How to Use)</h2>
-          <p>၁။ <b>Ads View & Points:</b> Post အသစ်တစ်ခု တင်ရန်အတွက် ကြော်ငြာ (3) ကြိမ် ကြည့်ရှုပေးရပါမည်။ ပြီးလျှင် Points (၁ မှ ၃ ထထိ) အလိုအလျောက် ရရှိမည် ဖြစ်ပါသည်။</p>
-          <p>၂။ <b>Categories:</b> ဟာသ၊ ဝတ္ထု၊ ဆိုရှယ်သတင်းနှင့် ဇာတ်ကားများကို သက်ဆိုင်ရာ ကဏ္ဍအလိုက် လွယ်ကူစွာ ဖတ်ရှုနိုင်ပါသည်။</p>
-          <p>၃။ <b>Community:</b> အခက်အခဲရှိပါက Menu ဘားရှိ Admin ကို အကြောင်းကြားရန် လင့်ခ်မှတစ်ဆင့် ဆက်သွယ်နိုင်ပါသည်။</p>
-        </div>
-      ) : (
-        <>
-          {/* Post Form with Ads Requirement (0/3) */}
-          <form onSubmit={handleSubmit} style={{ background: "#f8f9fa", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px" }}>
+      {/* ညာဘက် მთავር Content Area */}
+      <div style={{ flex: 1, padding: "15px", maxWidth: "520px" }}>
+        
+        <h1 style={{ fontSize: "20px", marginBottom: "15px", fontWeight: "bold" }}>MM Sub App</h1>
+
+        {/* POST ကို နှိပ်မှ ပေါ်လာမည့် Post တင်ရန် Form */}
+        {showPostForm && (
+          <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
             <h3 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Post အသစ်ဖန်တီးရန် (Points: {earnedPoints})</h3>
             
-            {/* Ad Task Box */}
             <div style={{ background: "#fff3cd", padding: "10px", borderRadius: "6px", marginBottom: "10px", border: "1px solid #ffeeba", fontSize: "13px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "5px" }}>
                 <span>Ads ကြည့်ရန် တာဝန်: <b>({adWatchCount}/3)</b></span>
@@ -248,105 +297,118 @@ export default function Home() {
               {loading ? "တင်နေသည်..." : adWatchCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည်"}
             </button>
           </form>
+        )}
 
-          {/* Posts Feed */}
-          <h2 style={{ fontSize: "18px", color: "#333" }}>Recent Posts</h2>
+        {/* About Section */}
+        {showAbout ? (
+          <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
+            <h2>အသုံးပြုပုံ အကျဉ်းချုပ် (About & How to Use)</h2>
+            <p>၁။ <b>Ads View & Points:</b> Post အသစ်တစ်ခု တင်ရန်အတွက် ကြော်ငြာ (3) ကြိမ် ကြည့်ရှုပေးရပါမည်။ ပြီးလျှင် Points (၁ မှ ၃ ထထိ) အလိုအလျောက် ရရှိမည် ဖြစ်ပါသည်။</p>
+            <p>၂။ <b>Book Tabs (ဘယ်ဘက်ရှိ ကာလာစုံတက်ဘ်များ):</b> ဟာသ၊ ဝတ္ထု၊ ဆိုရှယ်သတင်းနှင့် ဇာတ်ကားများကို တက်ဘ်များအလိုက် လွယ်ကူစွာ ဖတ်ရှုနိုင်ပါသည်။</p>
+            <p>၃။ <b>Admin Support:</b> အခက်အခဲရှိပါက ဘယ်ဘက်အောက်ဆုံးရှိ Admin သို့ အကြောင်းကြားရန် လင့်ခ်မှတစ်ဆင့် ဆက်သွယ်နိုင်ပါသည်။</p>
+          </div>
+        ) : (
+          <>
+            {/* Recent Posts Header */}
+            <h2 style={{ fontSize: "18px", color: "#333", marginTop: 0 }}>Recent Posts</h2>
 
-          {filteredPosts.length === 0 ? (
-            <p style={{ color: "#777" }}>No posts found in this category...</p>
-          ) : (
-            filteredPosts.map((post) => {
-              const isExpanded = expandedPosts[post.id];
-              const isLongText = post.content.length > 80;
-              const displayContent = isExpanded || !isLongText ? post.content : post.content.substring(0, 80) + "...";
-              const isCommentsOpen = showComments[post.id];
+            {filteredPosts.length === 0 ? (
+              <p style={{ color: "#777" }}>No posts found in this category...</p>
+            ) : (
+              filteredPosts.map((post) => {
+                const isExpanded = expandedPosts[post.id];
+                const isLongText = post.content.length > 80;
+                const displayContent = isExpanded || !isLongText ? post.content : post.content.substring(0, 80) + "...";
+                const isCommentsOpen = showComments[post.id];
 
-              return (
-                <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff" }}>
-                  
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
-                    <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>
-                      {post.views || 0} views
-                    </span>
-                  </div>
-
-                  {post.image_url && (
-                    <div style={{ marginTop: "8px" }}>
-                      <img
-                        src={post.image_url}
-                        alt="Post attachment"
-                        style={{ width: "100%", maxHeight: "300px", objectFit: "cover", borderRadius: "6px" }}
-                      />
-                    </div>
-                  )}
-
-                  <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.4", fontSize: "14px" }}>
-                    {displayContent}
-                    {isLongText && (
-                      <span
-                        onClick={() => handleToggleExpand(post.id, post.views || 0)}
-                        style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
-                      >
-                        {isExpanded ? "See less" : "See more"}
+                return (
+                  <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff", boxShadow: "0 2px 4px rgba(0,0,0,0.02)" }}>
+                    
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
+                      <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>
+                        {post.views || 0} views
                       </span>
-                    )}
-                  </p>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
-                    <button
-                      onClick={() => toggleComments(post.id)}
-                      style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}
-                    >
-                      💬 Comments ({post.comments?.length || 0})
-                    </button>
-
-                    <button
-                      onClick={() => handleShare(post.title)}
-                      style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
-                    >
-                      🔗 Share
-                    </button>
-                  </div>
-
-                  {isCommentsOpen && (
-                    <div style={{ marginTop: "8px" }}>
-                      {post.comments && post.comments.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
-                          {post.comments.map((c: any) => (
-                            <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
-                              {c.content}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
-                      )}
-
-                      <div style={{ display: "flex", gap: "5px" }}>
-                        <input
-                          type="text"
-                          placeholder="Write a comment..."
-                          value={commentInputs[post.id] || ""}
-                          onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                          style={{ flex: 1, padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }}
-                        />
-                        <button
-                          onClick={() => handleCommentSubmit(post.id)}
-                          style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
-                        >
-                          Send
-                        </button>
-                      </div>
                     </div>
-                  )}
 
-                </div>
-              );
-            })
-          )}
-        </>
-      )}
+                    {post.image_url && (
+                      <div style={{ marginTop: "8px" }}>
+                        <img
+                          src={post.image_url}
+                          alt="Post attachment"
+                          style={{ width: "100%", maxHeight: "300px", objectFit: "cover", borderRadius: "6px" }}
+                        />
+                      </div>
+                    )}
+
+                    <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.4", fontSize: "14px" }}>
+                      {displayContent}
+                      {isLongText && (
+                        <span
+                          onClick={() => handleToggleExpand(post.id, post.views || 0)}
+                          style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}
+                        >
+                          {isExpanded ? "See less" : "See more"}
+                        </span>
+                      )}
+                    </p>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
+                      <button
+                        onClick={() => toggleComments(post.id)}
+                        style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}
+                      >
+                        💬 Comments ({post.comments?.length || 0})
+                      </button>
+
+                      <button
+                        onClick={() => handleShare(post.title)}
+                        style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}
+                      >
+                        🔗 Share
+                      </button>
+                    </div>
+
+                    {isCommentsOpen && (
+                      <div style={{ marginTop: "8px" }}>
+                        {post.comments && post.comments.length > 0 ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
+                            {post.comments.map((c: any) => (
+                              <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
+                                {c.content}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
+                        )}
+
+                        <div style={{ display: "flex", gap: "5px" }}>
+                          <input
+                            type="text"
+                            placeholder="Write a comment..."
+                            value={commentInputs[post.id] || ""}
+                            onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
+                            style={{ flex: 1, padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }}
+                          />
+                          <button
+                            onClick={() => handleCommentSubmit(post.id)}
+                            style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}
+                          >
+                            Send
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })
+            )}
+          </>
+        )}
+
+      </div>
     </div>
   );
-}
+              }
