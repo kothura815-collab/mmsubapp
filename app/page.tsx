@@ -2,18 +2,27 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Light-weight Fast Banner Component
+// Dynamic Fresh Banner Ad Component (Category ပြောင်းတိုင်း / Item ရွေးတိုင်း အသစ်ပေါ်ရန်)
 function BannerAd({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!bannerRef.current) return;
     bannerRef.current.innerHTML = "";
+    
+    // HilltopAds Banner Script
     const script = document.createElement("script");
     script.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
     script.async = true;
     script.referrerPolicy = "no-referrer-when-downgrade";
     bannerRef.current.appendChild(script);
+
+    // RichAds In-Page Push / Notification Integration for active banner slots
+    const richAdsScript = document.createElement("script");
+    richAdsScript.src = "https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679";
+    richAdsScript.async = true;
+    bannerRef.current.appendChild(richAdsScript);
+
   }, [adKey]);
 
   return <div ref={bannerRef} style={{ margin: "12px 0", textAlign: "center", minHeight: "50px" }} />;
@@ -457,8 +466,8 @@ export default function Home() {
               {activeCategoryLabel ? `${activeCategoryLabel} - ` : ""}Recent Posts
             </h2>
 
-            {/* Top Header Banner Ad */}
-            <BannerAd adKey="top_header" />
+            {/* Dynamic Header Banner Ad with Category & Timestamp Key */}
+            <BannerAd adKey={`top_${activeCategory || 'home'}_${Date.now()}`} />
 
             {filteredPosts.length === 0 ? (
               <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
@@ -560,8 +569,8 @@ export default function Home() {
 
                     </div>
 
-                    {/* Banner Ads Insertion - Clean 3-Post Spacing to Prevent Speed Drop */}
-                    {(index + 1) % 3 === 0 && <BannerAd adKey={`feed_${post.id}`} />}
+                    {/* Fresh Dynamic Banner Ads per Item/Category Selection */}
+                    {(index + 1) % 2 === 0 && <BannerAd adKey={`feed_${post.id}_${activeCategory || 'home'}`} />}
                   </div>
                 );
               })
