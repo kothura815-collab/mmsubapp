@@ -45,10 +45,11 @@ export default function Home() {
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [userId, setUserId] = useState("");
 
-  // Admin View State
+  // Hidden Admin Login State
   const [adminPass, setAdminPass] = useState("");
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [userProfiles, setUserProfiles] = useState<any[]>([]);
+  const [adminClickCount, setAdminClickCount] = useState(0); // Secret trigger
 
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
   const [showComments, setShowComments] = useState<{ [key: number]: boolean }>({});
@@ -59,7 +60,6 @@ export default function Home() {
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
 
   useEffect(() => {
-    // Unique Device/User ID Generation
     let storedUid = localStorage.getItem("mm_sub_app_uid");
     if (!storedUid) {
       storedUid = "user_" + Math.random().toString(36).substring(2, 9);
@@ -150,7 +150,7 @@ export default function Home() {
           localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
 
           if (newCount >= 15) {
-            const randomPts = Math.floor(Math.random() * 11) + 5; // 5 to 15 Random
+            const randomPts = Math.floor(Math.random() * 11) + 5; 
             updatePoints(earnedPoints + randomPts);
             const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
             setLockUntil(fourHoursLater);
@@ -176,7 +176,7 @@ export default function Home() {
   };
 
   const fetchAdminProfiles = async () => {
-    if (adminPass === "admin123") { // Admin Password
+    if (adminPass === "admin123") {
       setIsAdminLoggedIn(true);
       try {
         const res = await fetch("/api/profiles");
@@ -348,7 +348,20 @@ export default function Home() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-        <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
+        <h1 
+          onClick={() => {
+            // Secret Admin Trigger: App နာမည်ကို ၅ ချက်ဆက်တိုက် နှိပ်မှ Admin Login ပေါ်လာမည်
+            const count = adminClickCount + 1;
+            setAdminClickCount(count);
+            if (count >= 5) {
+              setActiveCategory("about");
+              setAdminClickCount(0);
+            }
+          }} 
+          style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748", cursor: "pointer" }}
+        >
+          MM Sub App
+        </h1>
         <div style={{ display: "flex", gap: "6px" }}>
           {activeCategory && (
             <button onClick={handleBackToHome} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>⬅ Back</button>
@@ -368,7 +381,7 @@ export default function Home() {
           <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>6- ဇာတ်ကားအညွှန်း</button>
           <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>7- ဝတ္ထု ဖတ်ရန်</button>
           <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>8- Ads</button>
-          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About & Admin</button>
+          <button onClick={() => handleSelectCategory("about", "About")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About</button>
         </div>
       )}
 
@@ -444,10 +457,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* About & Admin Support */}
+        {/* About Section (User friendly - Admin Panel hidden unless authenticated) */}
         {activeCategory === "about" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
-            <h2 style={{ marginTop: 0 }}>About & Admin Support</h2>
+            <h2 style={{ marginTop: 0 }}>About & Support</h2>
             <p>🌟 <b>App ၏ ရည်ရွယ်ချက်:</b> မိမိကျွမ်းကျင်ရာများ၊ စိတ်ခံစားမှုများ၊ ပျော်ရွှင်မှုများနှင့် အနားယူရင်း ကိုယ်တိုင်ဖန်တီးနိုင်ရန် ရည်ရွယ်ပါသည်။</p>
             <p>📌 <b>အသုံးပြုပုံ:</b> ဆိုရှယ်မီဒီယာပေါ်တွင် ဟော့နေသည်များကို မျှဝေရန်၊ ရင်ဖွင့်ရန်၊ သတင်းစကားပါးရန်နှင့် ဝတ္ထု/ဇာတ်ကားအညွှန်းများကို ဖတ်ရှုနိုင်ပါသည်။</p>
             <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #eee" }} />
@@ -456,24 +469,24 @@ export default function Home() {
               💬 Contact Admin (Telegram)
             </button>
 
-            {/* Admin Dashboard */}
+            {/* Hidden Admin Login (Secretly triggered or password required) */}
             <div style={{ marginTop: "25px", paddingTop: "15px", borderTop: "2px dashed #cbd5e0" }}>
-              <h3 style={{ margin: "0 0 10px 0", fontSize: "15px", color: "#2d3748" }}>🔐 Admin Panel (User/Points စာရင်း)</h3>
+              <h3 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#718096" }}>🔐 Admin Access</h3>
               
               {!isAdminLoggedIn ? (
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input 
                     type="password" 
-                    placeholder="Admin Password" 
+                    placeholder="Enter Admin Password" 
                     value={adminPass} 
                     onChange={(e) => setAdminPass(e.target.value)} 
-                    style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ccc", flex: 1 }} 
+                    style={{ padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", flex: 1, fontSize: "12px" }} 
                   />
-                  <button onClick={fetchAdminProfiles} style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Login</button>
+                  <button onClick={handleAdminLogin} style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}>Login</button>
                 </div>
               ) : (
                 <div>
-                  <div style={{ background: "#ebf8ff", padding: "10px", borderRadius: "6px", marginBottom: "10px", fontWeight: "bold", color: "#2b6cb0" }}>
+                  <div style={{ background: "#ebf8ff", padding: "10px", borderRadius: "6px", marginBottom: "10px", fontWeight: "bold", color: "#2b6cb0", fontSize: "13px" }}>
                     📊 စုစုပေါင်း အသုံးပြုသူ (Users): {userProfiles.length} ယောက်
                   </div>
                   
@@ -506,8 +519,6 @@ export default function Home() {
               filteredPosts.map((post) => {
                 const isExpanded = expandedPosts[post.id];
                 const isCommentsOpen = showComments[post.id];
-                
-                // Date & Time Format matching Calendar (📅 11/10/26, 1:01 PM)
                 const formattedDate = post.created_at ? new Date(post.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }) : "";
 
                 return (
@@ -581,4 +592,4 @@ export default function Home() {
       </button>
     </div>
   );
-      }
+                                   }
