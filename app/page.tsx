@@ -530,6 +530,7 @@ export default function Home() {
                         </button>
                       </div>
 
+                      {/* Comments Section - Clean and No Ads */}
                       {isCommentsOpen && (
                         <div style={{ marginTop: "8px" }}>
                           {post.comments && post.comments.length > 0 ? (
@@ -555,7 +556,7 @@ export default function Home() {
 
                     </div>
 
-                    {/* Banner Ads Insertion for Higher Impressions */}
+                    {/* Banner Ads Insertion for Higher Impressions in Feed */}
                     {(index + 1) % 3 === 0 && <BannerAd />}
                   </div>
                 );
@@ -571,4 +572,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+                              }
