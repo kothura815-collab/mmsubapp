@@ -16,7 +16,7 @@ function BannerAd() {
     bannerRef.current.appendChild(script);
   }, []);
 
-  return <div ref={bannerRef} style={{ margin: "15px 0", textAlign: "center", minHeight: "50px" }} />;
+  return <div ref={bannerRef} style={{ margin: "10px 0", textAlign: "center", minHeight: "50px" }} />;
 }
 
 export default function Home() {
@@ -25,6 +25,9 @@ export default function Home() {
   const [activeCategoryLabel, setActiveCategoryLabel] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   
+  // First Click Direct Ad Overlay State
+  const [hasClickedFirst, setHasClickedFirst] = useState(false);
+
   // Post Form State
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -76,21 +79,24 @@ export default function Home() {
       if (lockTime > Date.now()) {
         setLockUntil(lockTime);
       } else {
+        // ၄ နာရီကျော်ပါက (0/10) အဖြစ် အစက ပြန်စမည်
         localStorage.removeItem("mm_sub_app_ad_lock_until");
+        localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify([0, 0, 0]));
+        setAdTaskCounts([0, 0, 0]);
       }
     }
 
     fetchPosts();
   }, []);
 
-  // Timer for 4-Hour Lock
+  // Timer for 4-Hour Lock Countdown & Reset to (0/10)
   useEffect(() => {
     if (!lockUntil) return;
     const interval = setInterval(() => {
       const diff = lockUntil - Date.now();
       if (diff <= 0) {
         setLockUntil(null);
-        setAdTaskCounts([0, 0, 0]);
+        setAdTaskCounts([0, 0, 0]); // (0/10) အဖြစ် အစက ပြန်စခြင်း
         localStorage.removeItem("mm_sub_app_ad_lock_until");
         localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify([0, 0, 0]));
         clearInterval(interval);
@@ -103,6 +109,14 @@ export default function Home() {
     }, 1000);
     return () => clearInterval(interval);
   }, [lockUntil]);
+
+  // Web သို့ စတင်ဝင်ရောက်ပြီး ဘယ်နေရာမဆို ပထမဆုံး ၁ ချက်နှိပ်ပါက Ads ပွင့်မည့် Logic
+  const handleGlobalFirstClick = () => {
+    if (!hasClickedFirst) {
+      setHasClickedFirst(true);
+      window.open(HILLTOP_ADS_LINK, "_blank");
+    }
+  };
 
   const updatePoints = (newPts: number) => {
     setEarnedPoints(newPts);
@@ -309,7 +323,7 @@ export default function Home() {
     : posts.filter((p) => p.category === activeCategory);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
+    <div onClick={handleGlobalFirstClick} style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
       <div ref={topRef}></div>
 
       {/* Middle Center Toast Notification */}
@@ -334,6 +348,16 @@ export default function Home() {
             {showMenu ? "✕ ပိတ်မည်" : "☰ MENU"}
           </button>
         </div>
+      </div>
+
+      {/* Floating Fast Ads Button */}
+      <div style={{ margin: "5px 0 12px 0", textAlign: "center" }}>
+        <button
+          onClick={() => window.open(HILLTOP_ADS_LINK, "_blank")}
+          style={{ width: "100%", background: "linear-gradient(90deg, #ff8c00, #e52e71)", color: "#fff", border: "none", padding: "10px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+        >
+          🔥 ကြည့်ရန် Ads (Click)
+        </button>
       </div>
 
       {/* Menu Dropdown */}
@@ -523,9 +547,10 @@ export default function Home() {
                       </span>
                     </div>
 
+                    {/* ပုံအပြည့်အဝ ပေါ်စေသည့် Fix (`height: auto`, `objectFit: contain`) */}
                     {post.image_url && (
-                      <div style={{ marginTop: "8px" }}>
-                        <img src={post.image_url} alt="Post attachment" style={{ width: "100%", maxHeight: "350px", objectFit: "cover", borderRadius: "6px" }} />
+                      <div style={{ marginTop: "8px", width: "100%", overflow: "hidden", borderRadius: "6px" }}>
+                        <img src={post.image_url} alt="Post attachment" style={{ width: "100%", height: "auto", display: "block", borderRadius: "6px" }} />
                       </div>
                     )}
 
@@ -586,4 +611,4 @@ export default function Home() {
 
     </div>
   );
-}
+            }
