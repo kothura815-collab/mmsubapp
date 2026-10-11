@@ -40,7 +40,7 @@ export default function Home() {
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Ads Section State (3 Tasks: 0/10 each & 4-Hour Lock with Proper Rotation Reset)
+  // Ads Section State (3 Tasks: 0/10 each & Rotation Reset)
   const [adTaskCounts, setAdTaskCounts] = useState<[number, number, number]>([0, 0, 0]);
   const [processingTaskIndex, setProcessingTaskIndex] = useState<number | null>(null);
   const [taskCountdown, setTaskCountdown] = useState(10);
@@ -65,15 +65,13 @@ export default function Home() {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
     setEarnedPoints(savedPoints !== null ? parseInt(savedPoints, 10) || 0 : 0);
 
+    // ချက်ချင်း (0/10) သို့ အစမှ ပြန်စစေရန် LocalStorage Lock ကို စစ်ဆေးပြီး ဖယ်ရှားပေးခြင်း
     const savedLockUntil = localStorage.getItem("mm_sub_app_ad_lock_until");
     if (savedLockUntil) {
       const lockTime = parseInt(savedLockUntil, 10);
       if (lockTime > Date.now()) {
         setLockUntil(lockTime);
-        // လော့ခ်ကျနေချိန်မှာ (10/10) ပြရန်
-        setAdTaskCounts([10, 10, 10]);
       } else {
-        // ၄ နာရီပြည့်သွားပါက ရှင်းလင်းပြီး (0/10) သို့ အစမှ ပြန်စရန် Reset လုပ်ခြင်း
         localStorage.removeItem("mm_sub_app_ad_lock_until");
         localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify([0, 0, 0]));
         setAdTaskCounts([0, 0, 0]);
@@ -82,7 +80,14 @@ export default function Home() {
     } else {
       const savedTaskCounts = localStorage.getItem("mm_sub_app_ad_task_counts");
       if (savedTaskCounts) {
-        try { setAdTaskCounts(JSON.parse(savedTaskCounts)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(savedTaskCounts);
+          if (Array.isArray(parsed) && parsed.length === 3) {
+            setAdTaskCounts(parsed);
+          }
+        } catch (e) {
+          setAdTaskCounts([0, 0, 0]);
+        }
       }
     }
 
@@ -124,6 +129,14 @@ export default function Home() {
       setLockUntil(fourHoursLater);
       localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
     }
+  };
+
+  // Handlers for Manual Force Reset (Rotation) if needed
+  const handleResetTasks = () => {
+    localStorage.removeItem("mm_sub_app_ad_lock_until");
+    localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify([0, 0, 0]));
+    setAdTaskCounts([0, 0, 0]);
+    setLockUntil(null);
   };
 
   const fetchPosts = async () => {
@@ -448,11 +461,19 @@ export default function Home() {
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
             <h2 style={{ marginBottom: "15px" }}>📢 Ads & Points</h2>
             
-            <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 20px", borderRadius: "8px", display: "inline-block", marginBottom: "20px", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
-              💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints}
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
+              <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 20px", borderRadius: "8px", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
+                💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints}
+              </div>
+              <button 
+                onClick={handleResetTasks}
+                style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}
+              >
+                🔄 Reset Task (0/10)
+              </button>
             </div>
 
-            {/* 4-Hour Lock Banner */}
+            {/* 4-Hour Lock Banner or Tasks */}
             {lockUntil ? (
               <div style={{ background: "#fff5f5", border: "1px solid #feb2b2", color: "#c53030", padding: "15px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", margin: "10px 0" }}>
                 🔒 Task များအားလုံး ပြီးဆုံးသွားပါပြီ။<br />
