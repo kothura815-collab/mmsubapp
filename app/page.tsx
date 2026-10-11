@@ -530,7 +530,7 @@ export default function Home() {
                         </button>
                       </div>
 
-                      {/* Comments Section - Clean and No Ads */}
+                      {/* Clean Comments Section (NO Ads inside comments) */}
                       {isCommentsOpen && (
                         <div style={{ marginTop: "8px" }}>
                           {post.comments && post.comments.length > 0 ? (
@@ -556,8 +556,8 @@ export default function Home() {
 
                     </div>
 
-                    {/* Banner Ads Insertion for Higher Impressions in Feed */}
-                    {(index + 1) % 3 === 0 && <BannerAd />}
+                    {/* Banner Ads Insertion Frequency Increased (Every 2 Posts for higher impressions) */}
+                    {(index + 1) % 2 === 0 && <BannerAd />}
                   </div>
                 );
               })
@@ -572,4 +572,4 @@ export default function Home() {
       </button>
     </div>
   );
-                              }
+}
