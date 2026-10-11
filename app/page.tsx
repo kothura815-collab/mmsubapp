@@ -31,16 +31,20 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  // Post Ad State (0/3)
   const [postAdCount, setPostAdCount] = useState(0);
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Ads Task State (0/15)
+  // Main Ads Section (0/15)
   const [adCount, setAdCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(10);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [lockRemainingTime, setLockRemainingTime] = useState("");
+
+  // Adult Novel Read More Logic
+  const [adultReadMoreState, setAdultReadMoreState] = useState<{ [key: number]: { isUnlocked: boolean; isProcessing: boolean; countdown: number } }>({});
 
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
@@ -100,36 +104,6 @@ export default function Home() {
     localStorage.setItem("mm_sub_app_points", newPts.toString());
   };
 
-  const handleWatchMainAd = () => {
-    if (lockUntil || isProcessingAd || adCount >= 15) return;
-
-    setIsProcessingAd(true);
-    setAdCountdown(10);
-    window.open(HILLTOP_ADS_LINK, "_blank");
-
-    const timer = setInterval(() => {
-      setAdCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setIsProcessingAd(false);
-          const newCount = adCount + 1;
-          setAdCount(newCount);
-          localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
-
-          if (newCount >= 15) {
-            const randomPts = Math.floor(Math.random() * 11) + 5; // 5 to 15 Random
-            updatePoints(earnedPoints + randomPts);
-            const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
-            setLockUntil(fourHoursLater);
-            localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
   const fetchPosts = async () => {
     try {
       const res = await fetch("/api/posts", { cache: "no-store" });
@@ -157,6 +131,63 @@ export default function Home() {
           return 0;
         }
         return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleWatchMainAd = () => {
+    if (lockUntil || isProcessingAd || adCount >= 15) return;
+
+    setIsProcessingAd(true);
+    setAdCountdown(10);
+    window.open(HILLTOP_ADS_LINK, "_blank");
+
+    const timer = setInterval(() => {
+      setAdCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsProcessingAd(false);
+          const newCount = adCount + 1;
+          setAdCount(newCount);
+          localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
+
+          if (newCount >= 15) {
+            const randomPts = Math.floor(Math.random() * 11) + 5;
+            updatePoints(earnedPoints + randomPts);
+            const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
+            setLockUntil(fourHoursLater);
+            localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleAdultReadMoreClick = (postId: number) => {
+    setAdultReadMoreState((prev) => ({
+      ...prev,
+      [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
+    }));
+
+    window.open(HILLTOP_ADS_LINK, "_blank");
+
+    const timer = setInterval(() => {
+      setAdultReadMoreState((prev) => {
+        const current = prev[postId];
+        if (!current) return prev;
+        if (current.countdown <= 1) {
+          clearInterval(timer);
+          return {
+            ...prev,
+            [postId]: { isUnlocked: true, isProcessing: false, countdown: 0 },
+          };
+        }
+        return {
+          ...prev,
+          [postId]: { ...current, countdown: current.countdown - 1 },
+        };
       });
     }, 1000);
   };
@@ -200,19 +231,25 @@ export default function Home() {
     setActiveCategory(catKey);
     setActiveCategoryLabel(label);
     setShowMenu(false);
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollToTop();
   };
 
   const handleBackToHome = () => {
     setActiveCategory(null);
     setActiveCategoryLabel("");
     setShowMenu(false);
+    scrollToTop();
+  };
+
+  const scrollToTop = () => {
+    setExpandedPosts({});
+    setShowComments({});
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleShare = (postTitle: string) => {
     if (navigator.share) {
-      navigator.share({ title: postTitle, url: window.location.href }).catch(() => {});
+      navigator.share({ title: postTitle, text: postTitle, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert("Link copied!");
@@ -316,9 +353,10 @@ export default function Home() {
           <button onClick={() => handleSelectCategory("local_news", "ရပ်ကွက်သတင်း")} style={{ background: "#dd6b20", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>4- ရပ်ကွက်သတင်း</button>
           <button onClick={() => handleSelectCategory("feelings", "ရင်ဖွင့်ရာ")} style={{ background: "#319795", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>5- ရင်ဖွင့်ရာ</button>
           <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>6- ဇာတ်ကားအညွှန်း</button>
-          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>7- ဝတ္ထု ဖတ်ရန်</button>
-          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>8- Ads</button>
-          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About & Admin</button>
+          <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>7- ဝတ္ထု</button>
+          <button onClick={() => handleSelectCategory("adult_novel", "လူကြီးဝတ္ထု")} style={{ background: "#9b2c2c", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>8- လူကြီးဝတ္ထု</button>
+          <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- Ads</button>
+          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>10- About & Admin</button>
         </div>
       )}
 
@@ -347,7 +385,8 @@ export default function Home() {
                 { key: "local_news", label: "ရပ်ကွက်သတင်း" },
                 { key: "feelings", label: "ရင်ဖွင့်ရာ" },
                 { key: "movie", label: "ဇာတ်ကားအညွှန်း" },
-                { key: "novel", label: "ဝတ္ထု ဖတ်ရန်" },
+                { key: "novel", label: "ဝတ္ထု" },
+                { key: "adult_novel", label: "လူကြီးဝတ္ထု" },
               ].map((item) => (
                 <button type="button" key={item.key} onClick={() => setCategory(item.key)} style={{ padding: "10px", borderRadius: "8px", border: category === item.key ? "2px solid #3182ce" : "1px solid #cbd5e0", background: category === item.key ? "#ebf8ff" : "#f7fafc", color: category === item.key ? "#2b6cb0" : "#2d3748", fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}>{item.label}</button>
               ))}
@@ -420,68 +459,104 @@ export default function Home() {
             {filteredPosts.length === 0 ? (
               <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
             ) : (
-              filteredPosts.map((post) => {
+              filteredPosts.map((post, index) => {
                 const isExpanded = expandedPosts[post.id];
                 const isCommentsOpen = showComments[post.id];
                 const formattedDate = post.created_at ? new Date(post.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }) : "";
 
+                const isAdultPost = post.category === "adult_novel";
+                const adultState = adultReadMoreState[post.id] || { isUnlocked: false, isProcessing: false, countdown: 10 };
+
                 return (
-                  <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff" }}>
-                    
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
-                      <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>{post.views || 0} views</span>
-                    </div>
-
-                    {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>📅 {formattedDate}</div>}
-
-                    {post.image_url && (
-                      <div style={{ marginTop: "8px", background: "#f0f0f0", borderRadius: "6px", overflow: "hidden" }}>
-                        <img src={post.image_url} alt="Post attachment" style={{ width: "100%", height: "auto", maxHeight: "500px", objectFit: "contain", display: "block", margin: "0 auto" }} />
+                  <div key={post.id}>
+                    <div style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff" }}>
+                      
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
+                        <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>{post.views || 0} views</span>
                       </div>
-                    )}
 
-                    <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
-                      {renderFormattedContent(post.content, isExpanded)}
-                      {post.content.length > 80 && (
-                        <span onClick={() => handleToggleExpand(post.id, post.views || 0)} style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}>
-                          {isExpanded ? " See less" : " See more"}
-                        </span>
-                      )}
-                    </p>
+                      {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>{formattedDate}</div>}
 
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
-                      <button onClick={() => toggleComments(post.id)} style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}>
-                        💬 Comments ({post.comments?.length || 0})
-                      </button>
-                      <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
-                        🔗 Share
-                      </button>
-                    </div>
-
-                    {isCommentsOpen && (
-                      <div style={{ marginTop: "8px" }}>
-                        {post.comments && post.comments.length > 0 ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
-                            {post.comments.map((c: any) => (
-                              <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
-                                {c.content}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
-                        )}
-
-                        <div style={{ display: "flex", gap: "5px" }}>
-                          <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
-                          <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
-                            Send
-                          </button>
+                      {post.image_url && (
+                        <div style={{ marginTop: "8px", background: "#f8f9fa", borderRadius: "6px", overflow: "hidden", border: "1px solid #edf2f7", padding: "4px" }}>
+                          <img src={post.image_url} alt="Post attachment" style={{ width: "100%", height: "auto", maxHeight: "400px", objectFit: "contain", borderRadius: "4px", display: "block", margin: "0 auto" }} />
                         </div>
-                      </div>
-                    )}
+                      )}
 
+                      {/* Adult Novel Content Handling with Read More Ad Gate */}
+                      {isAdultPost ? (
+                        <div style={{ marginTop: "8px" }}>
+                          {adultState.isUnlocked ? (
+                            <p style={{ color: "#333", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
+                              {renderFormattedContent(post.content, true)}
+                            </p>
+                          ) : (
+                            <div>
+                              <p style={{ color: "#333", lineHeight: "1.5", fontSize: "14px" }}>
+                                {post.content.length > 60 ? post.content.substring(0, 60) + "..." : post.content}
+                              </p>
+                              <div style={{ marginTop: "8px", background: "#fff5f5", padding: "10px", borderRadius: "6px", border: "1px solid #fed7d7" }}>
+                                {adultState.isProcessing ? (
+                                  <p style={{ color: "#c53030", fontSize: "13px", fontWeight: "bold", margin: 0 }}>
+                                    ⚠️ Processing ({adultState.countdown}s)... ဖတ်ရန် ခဏစောင့်ပါ...
+                                  </p>
+                                ) : (
+                                  <button onClick={() => handleAdultReadMoreClick(post.id)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
+                                    📖 Read More (ဖတ်ရန် Ads ကြည့်မည်)
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
+                          {renderFormattedContent(post.content, isExpanded)}
+                          {post.content.length > 80 && (
+                            <span onClick={() => handleToggleExpand(post.id, post.views || 0)} style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}>
+                              {isExpanded ? " See less" : " See more"}
+                            </span>
+                          )}
+                        </p>
+                      )}
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
+                        <button onClick={() => toggleComments(post.id)} style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}>
+                          💬 Comments ({post.comments?.length || 0})
+                        </button>
+                        <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
+                          🔗 Share
+                        </button>
+                      </div>
+
+                      {isCommentsOpen && (
+                        <div style={{ marginTop: "8px" }}>
+                          {post.comments && post.comments.length > 0 ? (
+                            <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
+                              {post.comments.map((c: any) => (
+                                <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
+                                  {c.content}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
+                          )}
+
+                          <div style={{ display: "flex", gap: "5px" }}>
+                            <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
+                            <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
+                              Send
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+
+                    {/* Banner Ads Insertion for Higher Impressions */}
+                    {(index + 1) % 3 === 0 && <BannerAd />}
                   </div>
                 );
               })
@@ -491,9 +566,9 @@ export default function Home() {
 
       </div>
 
-      <button onClick={() => topRef.current?.scrollIntoView({ behavior: "smooth" })} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99 }}>
+      <button onClick={scrollToTop} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
         ▲ Top
       </button>
     </div>
   );
-          }
+}
