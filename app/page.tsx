@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 
-function BannerAd() {
+// Light-weight Fast Banner Component
+function BannerAd({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -13,9 +14,9 @@ function BannerAd() {
     script.async = true;
     script.referrerPolicy = "no-referrer-when-downgrade";
     bannerRef.current.appendChild(script);
-  }, []);
+  }, [adKey]);
 
-  return <div ref={bannerRef} style={{ margin: "15px 0", textAlign: "center", minHeight: "50px" }} />;
+  return <div ref={bannerRef} style={{ margin: "12px 0", textAlign: "center", minHeight: "50px" }} />;
 }
 
 export default function Home() {
@@ -231,19 +232,21 @@ export default function Home() {
     setActiveCategory(catKey);
     setActiveCategoryLabel(label);
     setShowMenu(false);
-    scrollToTop();
+    scrollToTopAndCollapse();
   };
 
   const handleBackToHome = () => {
     setActiveCategory(null);
     setActiveCategoryLabel("");
     setShowMenu(false);
-    scrollToTop();
+    scrollToTopAndCollapse();
   };
 
-  const scrollToTop = () => {
+  // Top Up Click - Auto Collapse All (Read More, See More & Comments)
+  const scrollToTopAndCollapse = () => {
     setExpandedPosts({});
     setShowComments({});
+    setAdultReadMoreState({});
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -454,7 +457,8 @@ export default function Home() {
               {activeCategoryLabel ? `${activeCategoryLabel} - ` : ""}Recent Posts
             </h2>
 
-            <BannerAd />
+            {/* Top Header Banner Ad */}
+            <BannerAd adKey="top_header" />
 
             {filteredPosts.length === 0 ? (
               <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
@@ -530,7 +534,7 @@ export default function Home() {
                         </button>
                       </div>
 
-                      {/* Clean Comments Section (NO Ads inside comments) */}
+                      {/* Clean Comments Section (NO Ads inside) */}
                       {isCommentsOpen && (
                         <div style={{ marginTop: "8px" }}>
                           {post.comments && post.comments.length > 0 ? (
@@ -556,8 +560,8 @@ export default function Home() {
 
                     </div>
 
-                    {/* Banner Ads Insertion Frequency Increased (Every 2 Posts for higher impressions) */}
-                    {(index + 1) % 2 === 0 && <BannerAd />}
+                    {/* Banner Ads Insertion - Clean 3-Post Spacing to Prevent Speed Drop */}
+                    {(index + 1) % 3 === 0 && <BannerAd adKey={`feed_${post.id}`} />}
                   </div>
                 );
               })
@@ -567,7 +571,8 @@ export default function Home() {
 
       </div>
 
-      <button onClick={scrollToTop} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
+      {/* Top Button with Full Auto-Collapse */}
+      <button onClick={scrollToTopAndCollapse} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
         ▲ Top
       </button>
     </div>
