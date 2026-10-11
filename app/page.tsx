@@ -35,9 +35,10 @@ export default function Home() {
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  const [adTaskCounts, setAdTaskCounts] = useState<[number, number, number]>([0, 0, 0]);
-  const [processingTaskIndex, setProcessingTaskIndex] = useState<number | null>(null);
-  const [taskCountdown, setTaskCountdown] = useState(10);
+  // Ads Task State (0/15)
+  const [adCount, setAdCount] = useState(0);
+  const [isProcessingAd, setIsProcessingAd] = useState(false);
+  const [adCountdown, setAdCountdown] = useState(10);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [lockRemainingTime, setLockRemainingTime] = useState("");
 
@@ -61,13 +62,13 @@ export default function Home() {
         setLockUntil(lockTime);
       } else {
         localStorage.removeItem("mm_sub_app_ad_lock_until");
-        localStorage.removeItem("mm_sub_app_ad_task_counts");
-        setAdTaskCounts([0, 0, 0]);
+        localStorage.removeItem("mm_sub_app_ad_count");
+        setAdCount(0);
       }
     } else {
-      const savedTaskCounts = localStorage.getItem("mm_sub_app_ad_task_counts");
-      if (savedTaskCounts) {
-        try { setAdTaskCounts(JSON.parse(savedTaskCounts)); } catch (e) {}
+      const savedAdCount = localStorage.getItem("mm_sub_app_ad_count");
+      if (savedAdCount) {
+        setAdCount(parseInt(savedAdCount, 10) || 0);
       }
     }
 
@@ -80,9 +81,9 @@ export default function Home() {
       const diff = lockUntil - Date.now();
       if (diff <= 0) {
         setLockUntil(null);
-        setAdTaskCounts([0, 0, 0]);
+        setAdCount(0);
         localStorage.removeItem("mm_sub_app_ad_lock_until");
-        localStorage.removeItem("mm_sub_app_ad_task_counts");
+        localStorage.removeItem("mm_sub_app_ad_count");
         clearInterval(interval);
       } else {
         const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -99,15 +100,34 @@ export default function Home() {
     localStorage.setItem("mm_sub_app_points", newPts.toString());
   };
 
-  const updateTaskCounts = (newCounts: [number, number, number]) => {
-    setAdTaskCounts(newCounts);
-    localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify(newCounts));
+  const handleWatchMainAd = () => {
+    if (lockUntil || isProcessingAd || adCount >= 15) return;
 
-    if (newCounts[0] >= 10 && newCounts[1] >= 10 && newCounts[2] >= 10) {
-      const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
-      setLockUntil(fourHoursLater);
-      localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
-    }
+    setIsProcessingAd(true);
+    setAdCountdown(10);
+    window.open(HILLTOP_ADS_LINK, "_blank");
+
+    const timer = setInterval(() => {
+      setAdCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsProcessingAd(false);
+          const newCount = adCount + 1;
+          setAdCount(newCount);
+          localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
+
+          if (newCount >= 15) {
+            const randomPts = Math.floor(Math.random() * 11) + 5; // 5 to 15 Random
+            updatePoints(earnedPoints + randomPts);
+            const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
+            setLockUntil(fourHoursLater);
+            localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const fetchPosts = async () => {
@@ -134,33 +154,6 @@ export default function Home() {
           clearInterval(timer);
           setIsProcessingPostAd(false);
           setPostAdCount((c) => c + 1);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const handleWatchTaskAd = (index: number) => {
-    if (lockUntil || processingTaskIndex !== null || adTaskCounts[index] >= 10) return;
-
-    setProcessingTaskIndex(index);
-    setTaskCountdown(10);
-    window.open(HILLTOP_ADS_LINK, "_blank");
-
-    const timer = setInterval(() => {
-      setTaskCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setProcessingTaskIndex(null);
-          const updatedCounts: [number, number, number] = [...adTaskCounts];
-          updatedCounts[index] = updatedCounts[index] + 1;
-
-          if (updatedCounts[index] === 10) {
-            const randomPts = Math.floor(Math.random() * 10) + 1;
-            updatePoints(earnedPoints + randomPts);
-          }
-          updateTaskCounts(updatedCounts);
           return 0;
         }
         return prev - 1;
@@ -222,7 +215,7 @@ export default function Home() {
       navigator.share({ title: postTitle, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copied to clipboard!");
+      alert("Link copied!");
     }
   };
 
@@ -369,34 +362,33 @@ export default function Home() {
           </form>
         )}
 
-        {/* Ads Section */}
+        {/* Ads Section (0/15 & 4 Hours Rotation) */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-            <h2 style={{ marginBottom: "15px" }}>📢 Ads & Points</h2>
+            <h2 style={{ marginBottom: "10px", fontSize: "18px" }}>📢 Ads 4နာရီတစ်ကြိမ် ကြည့်ရင်း ပွိုင့်စုကြမယ်</h2>
+            
             <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 20px", borderRadius: "8px", display: "inline-block", marginBottom: "20px", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
               💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints}
             </div>
 
             {lockUntil ? (
               <div style={{ background: "#fff5f5", border: "1px solid #feb2b2", color: "#c53030", padding: "15px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px" }}>
-                🔒 Task များအားလုံး ပြီးဆုံးသွားပါပြီ။<br />ကျေးဇူးပြု၍ <b>{lockRemainingTime}</b> ကြာပြီးမှ ပြန်လည်ကြည့်ရှုပေးပါရန်။
+                🔒 Task ပြီးဆုံးသွားပါပြီ။<br />ကျေးဇူးပြု၍ <b>{lockRemainingTime}</b> ကြာပြီးမှ ပြန်လည်ကြည့်ရှုပေးပါရန်။
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                {[0, 1, 2].map((idx) => {
-                  const isDone = adTaskCounts[idx] >= 10;
-                  const isProcessing = processingTaskIndex === idx;
-                  return (
-                    <div key={idx} style={{ background: "#fff3cd", padding: "12px 15px", borderRadius: "8px", border: "1px solid #ffeeba", fontSize: "13px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span>Ads ကြည့်ရန် (Click): <b>({adTaskCounts[idx]}/10)</b></span>
-                        <button type="button" onClick={() => handleWatchTaskAd(idx)} disabled={isDone || processingTaskIndex !== null} style={{ background: isDone ? "#cbd5e0" : "#ffc107", color: isDone ? "#718096" : "#000", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: isDone ? "not-allowed" : "pointer" }}>
-                          {isDone ? "ပြီးပါပြီ" : isProcessing ? `Processing (${taskCountdown}s)...` : "Ads ကြည့်မည်"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div style={{ background: "#fff3cd", padding: "15px", borderRadius: "8px", border: "1px solid #ffeeba" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                  <span style={{ fontWeight: "bold", fontSize: "14px" }}>Ads ကြည့်ရန်: <b>({adCount}/15)</b></span>
+                  <button 
+                    type="button" 
+                    onClick={handleWatchMainAd} 
+                    disabled={isProcessingAd || adCount >= 15} 
+                    style={{ background: adCount >= 15 ? "#cbd5e0" : "#ffc107", color: adCount >= 15 ? "#718096" : "#000", border: "none", padding: "10px 18px", borderRadius: "6px", fontWeight: "bold", cursor: adCount >= 15 ? "not-allowed" : "pointer" }}
+                  >
+                    {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
+                  </button>
+                </div>
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
               </div>
             )}
           </div>
@@ -431,7 +423,7 @@ export default function Home() {
               filteredPosts.map((post) => {
                 const isExpanded = expandedPosts[post.id];
                 const isCommentsOpen = showComments[post.id];
-                const formattedDate = post.created_at ? new Date(post.created_at).toLocaleString("my-MM", { dateStyle: "medium", timeStyle: "short" }) : "";
+                const formattedDate = post.created_at ? new Date(post.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }) : "";
 
                 return (
                   <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff" }}>
@@ -504,4 +496,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+        }
