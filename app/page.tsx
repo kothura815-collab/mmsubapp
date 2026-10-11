@@ -43,14 +43,6 @@ export default function Home() {
   const [lockRemainingTime, setLockRemainingTime] = useState("");
 
   const [earnedPoints, setEarnedPoints] = useState(0);
-  const [userId, setUserId] = useState("");
-
-  // Hidden Admin Login State
-  const [adminPass, setAdminPass] = useState("");
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [userProfiles, setUserProfiles] = useState<any[]>([]);
-  const [adminClickCount, setAdminClickCount] = useState(0); // Secret trigger
-
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
   const [showComments, setShowComments] = useState<{ [key: number]: boolean }>({});
   const [commentInputs, setCommentInputs] = useState<{ [key: number]: string }>({});
@@ -60,18 +52,8 @@ export default function Home() {
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
 
   useEffect(() => {
-    let storedUid = localStorage.getItem("mm_sub_app_uid");
-    if (!storedUid) {
-      storedUid = "user_" + Math.random().toString(36).substring(2, 9);
-      localStorage.setItem("mm_sub_app_uid", storedUid);
-    }
-    setUserId(storedUid);
-
     const savedPoints = localStorage.getItem("mm_sub_app_points");
-    const initialPts = savedPoints !== null ? parseInt(savedPoints, 10) || 0 : 0;
-    setEarnedPoints(initialPts);
-
-    syncUserPointsToDatabase(storedUid, initialPts);
+    setEarnedPoints(savedPoints !== null ? parseInt(savedPoints, 10) || 0 : 0);
 
     const savedLockUntil = localStorage.getItem("mm_sub_app_ad_lock_until");
     if (savedLockUntil) {
@@ -113,24 +95,9 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [lockUntil]);
 
-  const syncUserPointsToDatabase = async (uid: string, pts: number) => {
-    try {
-      await fetch("/api/profiles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_device_id: uid, points: pts }),
-      });
-    } catch (err) {
-      console.error("Profile sync error:", err);
-    }
-  };
-
   const updatePoints = (newPts: number) => {
     setEarnedPoints(newPts);
     localStorage.setItem("mm_sub_app_points", newPts.toString());
-    if (userId) {
-      syncUserPointsToDatabase(userId, newPts);
-    }
   };
 
   const handleWatchMainAd = () => {
@@ -150,7 +117,7 @@ export default function Home() {
           localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
 
           if (newCount >= 15) {
-            const randomPts = Math.floor(Math.random() * 11) + 5; 
+            const randomPts = Math.floor(Math.random() * 11) + 5;
             updatePoints(earnedPoints + randomPts);
             const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
             setLockUntil(fourHoursLater);
@@ -172,23 +139,6 @@ export default function Home() {
       }
     } catch (err) {
       console.error("Fetch Error:", err);
-    }
-  };
-
-  const fetchAdminProfiles = async () => {
-    if (adminPass === "admin123") {
-      setIsAdminLoggedIn(true);
-      try {
-        const res = await fetch("/api/profiles");
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) setUserProfiles(data);
-        }
-      } catch (err) {
-        console.error("Fetch Profiles Error:", err);
-      }
-    } else {
-      alert("Admin စကားဝှက် မှားယွင်းနေပါသည်!");
     }
   };
 
@@ -265,7 +215,6 @@ export default function Home() {
       navigator.share({ title: postTitle, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Link copied!");
     }
   };
 
@@ -348,20 +297,7 @@ export default function Home() {
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-        <h1 
-          onClick={() => {
-            // Secret Admin Trigger: App နာမည်ကို ၅ ချက်ဆက်တိုက် နှိပ်မှ Admin Login ပေါ်လာမည်
-            const count = adminClickCount + 1;
-            setAdminClickCount(count);
-            if (count >= 5) {
-              setActiveCategory("about");
-              setAdminClickCount(0);
-            }
-          }} 
-          style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748", cursor: "pointer" }}
-        >
-          MM Sub App
-        </h1>
+        <h1 style={{ fontSize: "22px", margin: 0, fontWeight: "bold", color: "#2d3748" }}>MM Sub App</h1>
         <div style={{ display: "flex", gap: "6px" }}>
           {activeCategory && (
             <button onClick={handleBackToHome} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>⬅ Back</button>
@@ -381,7 +317,7 @@ export default function Home() {
           <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>6- ဇာတ်ကားအညွှန်း</button>
           <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>7- ဝတ္ထု ဖတ်ရန်</button>
           <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>8- Ads</button>
-          <button onClick={() => handleSelectCategory("about", "About")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About</button>
+          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About & Admin</button>
         </div>
       )}
 
@@ -425,7 +361,7 @@ export default function Home() {
           </form>
         )}
 
-        {/* Ads Section */}
+        {/* Ads Section (0/15 & 4 Hours Rotation) */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
             <h2 style={{ marginBottom: "10px", fontSize: "18px" }}>📢 Ads 4နာရီတစ်ကြိမ် ကြည့်ရင်း ပွိုင့်စုကြမယ်</h2>
@@ -457,50 +393,17 @@ export default function Home() {
           </div>
         )}
 
-        {/* About Section (User friendly - Admin Panel hidden unless authenticated) */}
+        {/* About Section */}
         {activeCategory === "about" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
-            <h2 style={{ marginTop: 0 }}>About & Support</h2>
+            <h2 style={{ marginTop: 0 }}>About & Admin Support</h2>
             <p>🌟 <b>App ၏ ရည်ရွယ်ချက်:</b> မိမိကျွမ်းကျင်ရာများ၊ စိတ်ခံစားမှုများ၊ ပျော်ရွှင်မှုများနှင့် အနားယူရင်း ကိုယ်တိုင်ဖန်တီးနိုင်ရန် ရည်ရွယ်ပါသည်။</p>
             <p>📌 <b>အသုံးပြုပုံ:</b> ဆိုရှယ်မီဒီယာပေါ်တွင် ဟော့နေသည်များကို မျှဝေရန်၊ ရင်ဖွင့်ရန်၊ သတင်းစကားပါးရန်နှင့် ဝတ္ထု/ဇာတ်ကားအညွှန်းများကို ဖတ်ရှုနိုင်ပါသည်။</p>
             <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #eee" }} />
             <p style={{ color: "#e53e3e", fontWeight: "bold", fontSize: "14px" }}>⚠️ ပို့စ်ကို ဖျက်ချင်ပါက Admin ဆီ တိုက်ရိုက် ဆက်သွယ်ပါရန်။</p>
-            <button onClick={() => window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer")} style={{ background: "#0088cc", color: "#fff", padding: "10px 18px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "13px" }}>
+            <button onClick={() => window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer")} style={{ background: "#0088cc", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
               💬 Contact Admin (Telegram)
             </button>
-
-            {/* Hidden Admin Login (Secretly triggered or password required) */}
-            <div style={{ marginTop: "25px", paddingTop: "15px", borderTop: "2px dashed #cbd5e0" }}>
-              <h3 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#718096" }}>🔐 Admin Access</h3>
-              
-              {!isAdminLoggedIn ? (
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input 
-                    type="password" 
-                    placeholder="Enter Admin Password" 
-                    value={adminPass} 
-                    onChange={(e) => setAdminPass(e.target.value)} 
-                    style={{ padding: "6px 10px", borderRadius: "4px", border: "1px solid #ccc", flex: 1, fontSize: "12px" }} 
-                  />
-                  <button onClick={handleAdminLogin} style={{ background: "#2b6cb0", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}>Login</button>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ background: "#ebf8ff", padding: "10px", borderRadius: "6px", marginBottom: "10px", fontWeight: "bold", color: "#2b6cb0", fontSize: "13px" }}>
-                    📊 စုစုပေါင်း အသုံးပြုသူ (Users): {userProfiles.length} ယောက်
-                  </div>
-                  
-                  <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "8px" }}>
-                    {userProfiles.map((u, i) => (
-                      <div key={u.id || i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #edf2f7", fontSize: "12px" }}>
-                        <span>👤 User #{i + 1} ({u.user_device_id?.substring(0, 10)})</span>
-                        <span style={{ fontWeight: "bold", color: "#d69e2e" }}>💰 {u.points} Pts</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -529,7 +432,7 @@ export default function Home() {
                       <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>{post.views || 0} views</span>
                     </div>
 
-                    {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>📅 {formattedDate}</div>}
+                    {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>{formattedDate}</div>}
 
                     {post.image_url && (
                       <div style={{ marginTop: "8px", background: "#f0f0f0", borderRadius: "6px", overflow: "hidden" }}>
@@ -571,25 +474,4 @@ export default function Home() {
 
                         <div style={{ display: "flex", gap: "5px" }}>
                           <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
-                          <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
-                            Send
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-                );
-              })
-            )}
-          </>
-        )}
-
-      </div>
-
-      <button onClick={() => topRef.current?.scrollIntoView({ behavior: "smooth" })} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99 }}>
-        ▲ Top
-      </button>
-    </div>
-  );
-                                   }
+                          <button onClick={() => handle
