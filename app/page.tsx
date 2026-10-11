@@ -40,7 +40,7 @@ export default function Home() {
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Ads Section State (3 Tasks: 0/10 each & 4-Hour Lock with Rotation)
+  // Ads Section State (3 Tasks: 0/10 each & 4-Hour Lock with Proper Rotation Reset)
   const [adTaskCounts, setAdTaskCounts] = useState<[number, number, number]>([0, 0, 0]);
   const [processingTaskIndex, setProcessingTaskIndex] = useState<number | null>(null);
   const [taskCountdown, setTaskCountdown] = useState(10);
@@ -65,20 +65,24 @@ export default function Home() {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
     setEarnedPoints(savedPoints !== null ? parseInt(savedPoints, 10) || 0 : 0);
 
-    const savedTaskCounts = localStorage.getItem("mm_sub_app_ad_task_counts");
-    if (savedTaskCounts) {
-      try { setAdTaskCounts(JSON.parse(savedTaskCounts)); } catch (e) {}
-    }
-
     const savedLockUntil = localStorage.getItem("mm_sub_app_ad_lock_until");
     if (savedLockUntil) {
       const lockTime = parseInt(savedLockUntil, 10);
       if (lockTime > Date.now()) {
         setLockUntil(lockTime);
+        // လော့ခ်ကျနေချိန်မှာ (10/10) ပြရန်
+        setAdTaskCounts([10, 10, 10]);
       } else {
+        // ၄ နာရီပြည့်သွားပါက ရှင်းလင်းပြီး (0/10) သို့ အစမှ ပြန်စရန် Reset လုပ်ခြင်း
         localStorage.removeItem("mm_sub_app_ad_lock_until");
-        setAdTaskCounts([0, 0, 0]);
         localStorage.setItem("mm_sub_app_ad_task_counts", JSON.stringify([0, 0, 0]));
+        setAdTaskCounts([0, 0, 0]);
+        setLockUntil(null);
+      }
+    } else {
+      const savedTaskCounts = localStorage.getItem("mm_sub_app_ad_task_counts");
+      if (savedTaskCounts) {
+        try { setAdTaskCounts(JSON.parse(savedTaskCounts)); } catch (e) {}
       }
     }
 
@@ -592,4 +596,4 @@ export default function Home() {
 
     </div>
   );
-}
+      }
