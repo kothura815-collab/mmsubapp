@@ -35,7 +35,7 @@ export default function Home() {
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Ads Task State (0/15) & 4-Hour Rotation
+  // Ads Task State (0/15)
   const [adCount, setAdCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(10);
@@ -117,7 +117,7 @@ export default function Home() {
           localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
 
           if (newCount >= 15) {
-            const randomPts = Math.floor(Math.random() * 11) + 5;
+            const randomPts = Math.floor(Math.random() * 11) + 5; // 5 to 15 Random
             updatePoints(earnedPoints + randomPts);
             const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
             setLockUntil(fourHoursLater);
@@ -215,6 +215,7 @@ export default function Home() {
       navigator.share({ title: postTitle, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
+      alert("Link copied!");
     }
   };
 
@@ -317,7 +318,7 @@ export default function Home() {
           <button onClick={() => handleSelectCategory("movie", "ဇာတ်ကားအညွှန်း")} style={{ background: "#744210", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>6- ဇာတ်ကားအညွှန်း</button>
           <button onClick={() => handleSelectCategory("novel", "ဝတ္ထု ဖတ်ရန်")} style={{ background: "#d69e2e", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>7- ဝတ္ထု ဖတ်ရန်</button>
           <button onClick={() => handleSelectCategory("ads", "Ads")} style={{ background: "#1a202c", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>8- Ads</button>
-          <button onClick={() => handleSelectCategory("about", "About & Support")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About & Support</button>
+          <button onClick={() => handleSelectCategory("about", "About & Admin")} style={{ background: "#3182ce", color: "#fff", border: "none", padding: "6px", borderRadius: "4px", fontWeight: "bold", fontSize: "11px", textAlign: "left", cursor: "pointer" }}>9- About & Admin</button>
         </div>
       )}
 
@@ -364,7 +365,7 @@ export default function Home() {
         {/* Ads Section (0/15 & 4 Hours Rotation) */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
-            <h2 style={{ marginBottom: "10px", fontSize: "18px" }}>Ads 4နာရီတစ်ကြိမ် ကြည့်ရင်း ပွိုင့်စုကြမယ်</h2>
+            <h2 style={{ marginBottom: "10px", fontSize: "18px" }}>📢 Ads 4နာရီတစ်ကြိမ် ကြည့်ရင်း ပွိုင့်စုကြမယ်</h2>
             
             <div style={{ background: "#fffaf0", border: "1px solid #ecc94b", padding: "10px 20px", borderRadius: "8px", display: "inline-block", marginBottom: "20px", fontWeight: "bold", color: "#744210", fontSize: "16px" }}>
               💰 လက်ရှိ ရရှိထားသော Points: {earnedPoints}
@@ -396,11 +397,11 @@ export default function Home() {
         {/* About Section */}
         {activeCategory === "about" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", lineHeight: "1.6" }}>
-            <h2 style={{ marginTop: 0 }}>About & Support</h2>
+            <h2 style={{ marginTop: 0 }}>About & Admin Support</h2>
             <p>🌟 <b>App ၏ ရည်ရွယ်ချက်:</b> မိမိကျွမ်းကျင်ရာများ၊ စိတ်ခံစားမှုများ၊ ပျော်ရွှင်မှုများနှင့် အနားယူရင်း ကိုယ်တိုင်ဖန်တီးနိုင်ရန် ရည်ရွယ်ပါသည်။</p>
             <p>📌 <b>အသုံးပြုပုံ:</b> ဆိုရှယ်မီဒီယာပေါ်တွင် ဟော့နေသည်များကို မျှဝေရန်၊ ရင်ဖွင့်ရန်၊ သတင်းစကားပါးရန်နှင့် ဝတ္ထု/ဇာတ်ကားအညွှန်းများကို ဖတ်ရှုနိုင်ပါသည်။</p>
             <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #eee" }} />
-            <p style={{ color: "#e53e3e", fontWeight: "bold", fontSize: "14px" }}>⚠️ ပို့စ်မှားရေးမိပါက Admin ဆီသို့ တိုက်ရိုက် ဆက်သွယ်ပါရန်။</p>
+            <p style={{ color: "#e53e3e", fontWeight: "bold", fontSize: "14px" }}>⚠️ ပို့စ်ကို ဖျက်ချင်ပါက Admin ဆီ တိုက်ရိုက် ဆက်သွယ်ပါရန်။</p>
             <button onClick={() => window.open("https://t.me/Sayar_Soe_Thukha", "_blank", "noopener,noreferrer")} style={{ background: "#0088cc", color: "#fff", padding: "12px 20px", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px", marginTop: "10px" }}>
               💬 Contact Admin (Telegram)
             </button>
@@ -432,7 +433,7 @@ export default function Home() {
                       <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>{post.views || 0} views</span>
                     </div>
 
-                    {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>{formattedDate}</div>}
+                    {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>📅 {formattedDate}</div>}
 
                     {post.image_url && (
                       <div style={{ marginTop: "8px", background: "#f0f0f0", borderRadius: "6px", overflow: "hidden" }}>
@@ -453,4 +454,46 @@ export default function Home() {
                       <button onClick={() => toggleComments(post.id)} style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}>
                         💬 Comments ({post.comments?.length || 0})
                       </button>
-                      <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px",
+                      <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
+                        🔗 Share
+                      </button>
+                    </div>
+
+                    {isCommentsOpen && (
+                      <div style={{ marginTop: "8px" }}>
+                        {post.comments && post.comments.length > 0 ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
+                            {post.comments.map((c: any) => (
+                              <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
+                                {c.content}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
+                        )}
+
+                        <div style={{ display: "flex", gap: "5px" }}>
+                          <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
+                          <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
+                            Send
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })
+            )}
+          </>
+        )}
+
+      </div>
+
+      <button onClick={() => topRef.current?.scrollIntoView({ behavior: "smooth" })} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99 }}>
+        ▲ Top
+      </button>
+    </div>
+  );
+          }
