@@ -2,30 +2,46 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Dynamic Fresh Banner Ad Component (Category ပြောင်းတိုင်း / Item ရွေးတိုင်း အသစ်ပေါ်ရန်)
-function BannerAd({ adKey }: { adKey: string | number }) {
+// Top Header Dynamic Auto-Rotating Banner Ad (တစ်နေရာတည်းမှာ ဆက်တိုက် ပြောင်းပေးသည့် စနစ်)
+function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!bannerRef.current) return;
-    bannerRef.current.innerHTML = "";
-    
-    // HilltopAds Banner Script
-    const script = document.createElement("script");
-    script.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
-    script.async = true;
-    script.referrerPolicy = "no-referrer-when-downgrade";
-    bannerRef.current.appendChild(script);
 
-    // RichAds In-Page Push / Notification Integration for active banner slots
-    const richAdsScript = document.createElement("script");
-    richAdsScript.src = "https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679";
-    richAdsScript.async = true;
-    bannerRef.current.appendChild(richAdsScript);
+    const loadAds = () => {
+      if (!bannerRef.current) return;
+      bannerRef.current.innerHTML = "";
 
+      // HilltopAds Script
+      const script = document.createElement("script");
+      script.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
+      script.async = true;
+      script.referrerPolicy = "no-referrer-when-downgrade";
+      bannerRef.current.appendChild(script);
+
+      // RichAds In-Page Push Banner Integration
+      const richAdsScript = document.createElement("script");
+      richAdsScript.src = "https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679";
+      richAdsScript.async = true;
+      bannerRef.current.appendChild(richAdsScript);
+    };
+
+    loadAds();
+
+    // 15 စက္ကန့်တစ်ကြိမ် Banner ကြော်ငြာအသစ် ဆက်တိုက် အလိုအလျောက် ပြောင်းပေးမည်
+    const rotateInterval = setInterval(() => {
+      loadAds();
+    }, 15000);
+
+    return () => clearInterval(rotateInterval);
   }, [adKey]);
 
-  return <div ref={bannerRef} style={{ margin: "12px 0", textAlign: "center", minHeight: "50px" }} />;
+  return (
+    <div style={{ background: "#fff", padding: "8px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "60px" }}>
+      <div ref={bannerRef} />
+    </div>
+  );
 }
 
 export default function Home() {
@@ -126,6 +142,20 @@ export default function Home() {
     }
   };
 
+  // Real View Counter Function (တကယ်ဖတ်မှ View တက်မည်)
+  const incrementPostView = async (postId: number, currentViews: number) => {
+    try {
+      await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "incrementView", postId, currentViews: currentViews || 0 }),
+      });
+      fetchPosts();
+    } catch (err) {
+      console.error("Error updating views:", err);
+    }
+  };
+
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
@@ -175,7 +205,7 @@ export default function Home() {
     }, 1000);
   };
 
-  const handleAdultReadMoreClick = (postId: number) => {
+  const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
     setAdultReadMoreState((prev) => ({
       ...prev,
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
@@ -189,6 +219,8 @@ export default function Home() {
         if (!current) return prev;
         if (current.countdown <= 1) {
           clearInterval(timer);
+          // တကယ် ဖတ်ရှုလိုက်သဖြင့် View တိုးမည်
+          incrementPostView(postId, currentViews);
           return {
             ...prev,
             [postId]: { isUnlocked: true, isProcessing: false, countdown: 0 },
@@ -251,7 +283,6 @@ export default function Home() {
     scrollToTopAndCollapse();
   };
 
-  // Top Up Click - Auto Collapse All (Read More, See More & Comments)
   const scrollToTopAndCollapse = () => {
     setExpandedPosts({});
     setShowComments({});
@@ -272,12 +303,9 @@ export default function Home() {
     const isCurrentlyExpanded = expandedPosts[postId];
     setExpandedPosts({ [postId]: !isCurrentlyExpanded });
 
+    // တကယ် ဖတ်ရန် See More ကို နှိပ်မှသာ View တက်မည်
     if (!isCurrentlyExpanded) {
-      fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "incrementView", postId, currentViews }),
-      }).then(() => fetchPosts());
+      incrementPostView(postId, currentViews);
     }
   };
 
@@ -375,6 +403,9 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
+        {/* Single Dynamic Rotating Header Banner (Item/Category ရောက်တိုင်း ပေါ်မည်) */}
+        <DynamicTopBanner adKey={activeCategory || 'home'} />
+
         {/* Post Form */}
         {activeCategory === "post" && (
           <form onSubmit={handleSubmit} style={{ background: "#fff", padding: "15px", borderRadius: "10px", border: "1px solid #ddd", marginBottom: "20px" }}>
@@ -466,13 +497,10 @@ export default function Home() {
               {activeCategoryLabel ? `${activeCategoryLabel} - ` : ""}Recent Posts
             </h2>
 
-            {/* Dynamic Header Banner Ad with Category & Timestamp Key */}
-            <BannerAd adKey={`top_${activeCategory || 'home'}_${Date.now()}`} />
-
             {filteredPosts.length === 0 ? (
               <p style={{ color: "#777" }}>ဤကဏ္ဍတွင် ပို့စ်များ မရှိသေးပါ...</p>
             ) : (
-              filteredPosts.map((post, index) => {
+              filteredPosts.map((post) => {
                 const isExpanded = expandedPosts[post.id];
                 const isCommentsOpen = showComments[post.id];
                 const formattedDate = post.created_at ? new Date(post.created_at).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }) : "";
@@ -481,96 +509,91 @@ export default function Home() {
                 const adultState = adultReadMoreState[post.id] || { isUnlocked: false, isProcessing: false, countdown: 10 };
 
                 return (
-                  <div key={post.id}>
-                    <div style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff" }}>
-                      
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
-                        <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>{post.views || 0} views</span>
-                      </div>
-
-                      {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>{formattedDate}</div>}
-
-                      {post.image_url && (
-                        <div style={{ marginTop: "8px", background: "#f8f9fa", borderRadius: "6px", overflow: "hidden", border: "1px solid #edf2f7", padding: "4px" }}>
-                          <img src={post.image_url} alt="Post attachment" style={{ width: "100%", height: "auto", maxHeight: "400px", objectFit: "contain", borderRadius: "4px", display: "block", margin: "0 auto" }} />
-                        </div>
-                      )}
-
-                      {/* Adult Novel Content Handling with Read More Ad Gate */}
-                      {isAdultPost ? (
-                        <div style={{ marginTop: "8px" }}>
-                          {adultState.isUnlocked ? (
-                            <p style={{ color: "#333", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
-                              {renderFormattedContent(post.content, true)}
-                            </p>
-                          ) : (
-                            <div>
-                              <p style={{ color: "#333", lineHeight: "1.5", fontSize: "14px" }}>
-                                {post.content.length > 60 ? post.content.substring(0, 60) + "..." : post.content}
-                              </p>
-                              <div style={{ marginTop: "8px", background: "#fff5f5", padding: "10px", borderRadius: "6px", border: "1px solid #fed7d7" }}>
-                                {adultState.isProcessing ? (
-                                  <p style={{ color: "#c53030", fontSize: "13px", fontWeight: "bold", margin: 0 }}>
-                                    ⚠️ Processing ({adultState.countdown}s)... ဖတ်ရန် ခဏစောင့်ပါ...
-                                  </p>
-                                ) : (
-                                  <button onClick={() => handleAdultReadMoreClick(post.id)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
-                                    📖 Read More (ဖတ်ရန် Ads ကြည့်မည်)
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
-                          {renderFormattedContent(post.content, isExpanded)}
-                          {post.content.length > 80 && (
-                            <span onClick={() => handleToggleExpand(post.id, post.views || 0)} style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}>
-                              {isExpanded ? " See less" : " See more"}
-                            </span>
-                          )}
-                        </p>
-                      )}
-
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
-                        <button onClick={() => toggleComments(post.id)} style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}>
-                          💬 Comments ({post.comments?.length || 0})
-                        </button>
-                        <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
-                          🔗 Share
-                        </button>
-                      </div>
-
-                      {/* Clean Comments Section (NO Ads inside) */}
-                      {isCommentsOpen && (
-                        <div style={{ marginTop: "8px" }}>
-                          {post.comments && post.comments.length > 0 ? (
-                            <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
-                              {post.comments.map((c: any) => (
-                                <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
-                                  {c.content}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
-                          )}
-
-                          <div style={{ display: "flex", gap: "5px" }}>
-                            <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
-                            <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
-                              Send
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
+                  <div key={post.id} style={{ border: "1px solid #e0e0e0", padding: "12px", marginTop: "12px", borderRadius: "8px", background: "#fff" }}>
+                    
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>{post.title}</h3>
+                      <span style={{ fontSize: "11px", color: "#666", background: "#f0f2f5", padding: "3px 8px", borderRadius: "10px" }}>{post.views || 0} views</span>
                     </div>
 
-                    {/* Fresh Dynamic Banner Ads per Item/Category Selection */}
-                    {(index + 1) % 2 === 0 && <BannerAd adKey={`feed_${post.id}_${activeCategory || 'home'}`} />}
+                    {formattedDate && <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>{formattedDate}</div>}
+
+                    {post.image_url && (
+                      <div style={{ marginTop: "8px", background: "#f8f9fa", borderRadius: "6px", overflow: "hidden", border: "1px solid #edf2f7", padding: "4px" }}>
+                        <img src={post.image_url} alt="Post attachment" style={{ width: "100%", height: "auto", maxHeight: "400px", objectFit: "contain", borderRadius: "4px", display: "block", margin: "0 auto" }} />
+                      </div>
+                    )}
+
+                    {/* Adult Novel Content Handling with Read More Ad Gate & Real View Update */}
+                    {isAdultPost ? (
+                      <div style={{ marginTop: "8px" }}>
+                        {adultState.isUnlocked ? (
+                          <p style={{ color: "#333", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
+                            {renderFormattedContent(post.content, true)}
+                          </p>
+                        ) : (
+                          <div>
+                            <p style={{ color: "#333", lineHeight: "1.5", fontSize: "14px" }}>
+                              {post.content.length > 60 ? post.content.substring(0, 60) + "..." : post.content}
+                            </p>
+                            <div style={{ marginTop: "8px", background: "#fff5f5", padding: "10px", borderRadius: "6px", border: "1px solid #fed7d7" }}>
+                              {adultState.isProcessing ? (
+                                <p style={{ color: "#c53030", fontSize: "13px", fontWeight: "bold", margin: 0 }}>
+                                  ⚠️ Processing ({adultState.countdown}s)... ဖတ်ရန် ခဏစောင့်ပါ...
+                                </p>
+                              ) : (
+                                <button onClick={() => handleAdultReadMoreClick(post.id, post.views)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
+                                  📖 Read More (ဖတ်ရန် Ads ကြည့်မည်)
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p style={{ color: "#333", marginTop: "8px", lineHeight: "1.5", fontSize: "14px", whiteSpace: "pre-line", wordBreak: "break-word" }}>
+                        {renderFormattedContent(post.content, isExpanded)}
+                        {post.content.length > 80 && (
+                          <span onClick={() => handleToggleExpand(post.id, post.views)} style={{ color: "#0070f3", cursor: "pointer", marginLeft: "5px", fontWeight: "bold" }}>
+                            {isExpanded ? " See less" : " See more"}
+                          </span>
+                        )}
+                      </p>
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", fontSize: "13px" }}>
+                      <button onClick={() => toggleComments(post.id)} style={{ background: "none", border: "none", color: "#555", fontWeight: "bold", cursor: "pointer", padding: 0 }}>
+                        💬 Comments ({post.comments?.length || 0})
+                      </button>
+                      <button onClick={() => handleShare(post.title)} style={{ background: "#edf2f7", border: "none", padding: "4px 10px", borderRadius: "5px", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>
+                        🔗 Share
+                      </button>
+                    </div>
+
+                    {/* Clean Comments Section (NO Ads inside) */}
+                    {isCommentsOpen && (
+                      <div style={{ marginTop: "8px" }}>
+                        {post.comments && post.comments.length > 0 ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
+                            {post.comments.map((c: any) => (
+                              <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
+                                {c.content}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
+                        )}
+
+                        <div style={{ display: "flex", gap: "5px" }}>
+                          <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
+                          <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
+                            Send
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
                 );
               })
@@ -586,4 +609,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+        }
