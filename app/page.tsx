@@ -2,43 +2,45 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Top Header Dynamic Auto-Rotating Banner Ad (1s အတွင်း ပေါ်ပြီး တစ်နေရာတည်းတွင် ဆက်တိုက် အသစ်ပြောင်းမည်)
+// Robust Iframe/Script Banner Component (အကွက်အလွတ်မဖြစ်ဘဲ ကြော်ငြာသေချာပေါက် ပေါ်စေရန်)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!bannerRef.current) return;
+    bannerRef.current.innerHTML = "";
 
-    const loadAds = () => {
-      if (!bannerRef.current) return;
-      bannerRef.current.innerHTML = "";
+    // iframe ဖန်တီး၍ Ad script ကို iframe အတွင်း တိုက်ရိုက်ထည့်သွင်းခြင်း (Rendering သေချာစေရန်)
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "60px";
+    iframe.style.border = "none";
+    iframe.style.overflow = "hidden";
+    iframe.scrolling = "no";
+    
+    bannerRef.current.appendChild(iframe);
 
-      // HilltopAds Script
-      const script = document.createElement("script");
-      script.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
-      script.async = true;
-      script.referrerPolicy = "no-referrer-when-downgrade";
-      bannerRef.current.appendChild(script);
-
-      // RichAds In-Page Push Banner Integration
-      const richAdsScript = document.createElement("script");
-      richAdsScript.src = "https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679";
-      richAdsScript.async = true;
-      bannerRef.current.appendChild(richAdsScript);
-    };
-
-    loadAds();
-
-    // 15 စက္ကန့်တစ်ကြိမ် ကြော်ငြာအသစ် ဆက်တိုက် အလိုအလျောက် ပြောင်းပေးမည်
-    const rotateInterval = setInterval(() => {
-      loadAds();
-    }, 15000);
-
-    return () => clearInterval(rotateInterval);
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; }</style>
+          </head>
+          <body>
+            <script src="//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK" async></script>
+            <script src="https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679" async></script>
+          </body>
+        </html>
+      `);
+      doc.close();
+    }
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "8px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "60px" }}>
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "65px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -206,7 +208,6 @@ export default function Home() {
   };
 
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
-    // စတင်နှိပ်လိုက်သည်နှင့် +1 View တက်မည်
     incrementPostView(postId, currentViews);
 
     setAdultReadMoreState((prev) => ({
@@ -304,7 +305,6 @@ export default function Home() {
     const isCurrentlyExpanded = expandedPosts[postId];
     setExpandedPosts({ [postId]: !isCurrentlyExpanded });
 
-    // See More ကို စတင်နှိပ်လိုက်သည်နှင့် +1 View တက်မည်
     if (!isCurrentlyExpanded) {
       incrementPostView(postId, currentViews);
     }
@@ -404,7 +404,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Single Dynamic Rotating Header Banner */}
+        {/* Dynamic Iframe Banner (ကြော်ငြာအသေအချာ ပေါ်စေရန်) */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -610,4 +610,4 @@ export default function Home() {
       </button>
     </div>
   );
-                      }
+            }
