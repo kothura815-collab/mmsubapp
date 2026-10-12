@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Top Header Dynamic Auto-Rotating Banner Ad (တစ်နေရာတည်းမှာ ဆက်တိုက် ပြောင်းပေးသည့် စနစ်)
+// Top Header Dynamic Auto-Rotating Banner Ad (1s အတွင်း ပေါ်ပြီး တစ်နေရာတည်းတွင် ဆက်တိုက် အသစ်ပြောင်းမည်)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +29,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     loadAds();
 
-    // 15 စက္ကန့်တစ်ကြိမ် Banner ကြော်ငြာအသစ် ဆက်တိုက် အလိုအလျောက် ပြောင်းပေးမည်
+    // 15 စက္ကန့်တစ်ကြိမ် ကြော်ငြာအသစ် ဆက်တိုက် အလိုအလျောက် ပြောင်းပေးမည်
     const rotateInterval = setInterval(() => {
       loadAds();
     }, 15000);
@@ -142,7 +142,7 @@ export default function Home() {
     }
   };
 
-  // Real View Counter Function (တကယ်ဖတ်မှ View တက်မည်)
+  // View Counter Function (+1 View when clicked)
   const incrementPostView = async (postId: number, currentViews: number) => {
     try {
       await fetch("/api/posts", {
@@ -206,6 +206,9 @@ export default function Home() {
   };
 
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
+    // စတင်နှိပ်လိုက်သည်နှင့် +1 View တက်မည်
+    incrementPostView(postId, currentViews);
+
     setAdultReadMoreState((prev) => ({
       ...prev,
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
@@ -219,8 +222,6 @@ export default function Home() {
         if (!current) return prev;
         if (current.countdown <= 1) {
           clearInterval(timer);
-          // တကယ် ဖတ်ရှုလိုက်သဖြင့် View တိုးမည်
-          incrementPostView(postId, currentViews);
           return {
             ...prev,
             [postId]: { isUnlocked: true, isProcessing: false, countdown: 0 },
@@ -303,7 +304,7 @@ export default function Home() {
     const isCurrentlyExpanded = expandedPosts[postId];
     setExpandedPosts({ [postId]: !isCurrentlyExpanded });
 
-    // တကယ် ဖတ်ရန် See More ကို နှိပ်မှသာ View တက်မည်
+    // See More ကို စတင်နှိပ်လိုက်သည်နှင့် +1 View တက်မည်
     if (!isCurrentlyExpanded) {
       incrementPostView(postId, currentViews);
     }
@@ -403,7 +404,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Single Dynamic Rotating Header Banner (Item/Category ရောက်တိုင်း ပေါ်မည်) */}
+        {/* Single Dynamic Rotating Header Banner */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -524,7 +525,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Adult Novel Content Handling with Read More Ad Gate & Real View Update */}
+                    {/* Adult Novel Content Handling with Read More Ad Gate & +1 View */}
                     {isAdultPost ? (
                       <div style={{ marginTop: "8px" }}>
                         {adultState.isUnlocked ? (
@@ -609,4 +610,4 @@ export default function Home() {
       </button>
     </div>
   );
-        }
+                      }
