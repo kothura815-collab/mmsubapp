@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Dynamic Iframe Banner (Adcash ကင်းစင်ပြီး HilltopAds နဲ့ RichAds သီးသန့်သုံးထားသော စနစ်)
+// Multi-Network Dynamic Top Banner Component (HilltopAds + RichAds + Adsterra 300x250)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "60px";
+    iframe.style.height = "260px";
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -26,10 +26,25 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; }</style>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; }</style>
           </head>
           <body>
+            <!-- Adsterra 300x250 Banner -->
+            <script type="text/javascript">
+              atOptions = {
+                'key' : '6754e0813becc9cbc994188dc88d18de',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
+            
+            <!-- HilltopAds Script -->
             <script src="//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK" async></script>
+            
+            <!-- RichAds In-Page Push -->
             <script src="https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679" async></script>
           </body>
         </html>
@@ -39,7 +54,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "65px", overflow: "hidden" }}>
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -80,7 +95,11 @@ export default function Home() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
+
+  // Direct / Smart Links
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
+  const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
+  const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
 
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
@@ -143,6 +162,7 @@ export default function Home() {
     }
   };
 
+  // View Increment (+1 View on Interaction)
   const incrementPostView = async (postId: number, currentViews: number) => {
     try {
       await fetch("/api/posts", {
@@ -156,11 +176,15 @@ export default function Home() {
     }
   };
 
+  // Post Task (0/3): HilltopAds & Adsterra Smartlink
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
-    window.open(HILLTOP_ADS_LINK, "_blank");
+    
+    // Rotate between HilltopAds and Adsterra
+    const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
+    window.open(targetLink, "_blank");
 
     const timer = setInterval(() => {
       setPostAdCountdown((prev) => {
@@ -175,12 +199,16 @@ export default function Home() {
     }, 1000);
   };
 
+  // Points Task (0/15): Adsterra Smartlink (Adult)
   const handleWatchMainAd = () => {
     if (lockUntil || isProcessingAd || adCount >= 15) return;
 
     setIsProcessingAd(true);
     setAdCountdown(10);
-    window.open(HILLTOP_ADS_LINK, "_blank");
+    
+    // Rotate Adsterra Links
+    const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
+    window.open(targetLink, "_blank");
 
     const timer = setInterval(() => {
       setAdCountdown((prev) => {
@@ -205,6 +233,7 @@ export default function Home() {
     }, 1000);
   };
 
+  // Read More Gate: HilltopAds & Adsterra Adult Smartlink
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
     incrementPostView(postId, currentViews);
 
@@ -213,7 +242,9 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
-    window.open(HILLTOP_ADS_LINK, "_blank");
+    // Randomize/Rotate between HilltopAds and Adsterra Adult
+    const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
+    window.open(targetLink, "_blank");
 
     const timer = setInterval(() => {
       setAdultReadMoreState((prev) => {
@@ -402,7 +433,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Iframe Banner */}
+        {/* Multi-Network Dynamic Top Banner */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
