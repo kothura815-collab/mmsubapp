@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server";
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabaseClient";
+import { createClient } from "@supabase/supabase-js";
 
-export const revalidate = 0; // Disable slow caching, enforce instant responses
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const IMGBB_API_KEY = "1b6579975db16e1eccd6d664ef32ec9d";
 
 export async function GET() {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/posts?select=id,title,content,category,image_url,views,created_at,comments(id,content)&order=created_at.desc`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        cache: "no-store",
-      }
-    );
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data, { status: 200 });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
@@ -27,84 +28,90 @@ export async function POST(req: Request) {
   try {
     const contentType = req.headers.get("content-type") || "";
 
+    // 1. Increment View Action
     if (contentType.includes("application/json")) {
       const body = await req.json();
-
+      
       if (body.action === "incrementView") {
-        const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?id=eq.${body.postId}`, {
-          method: "PATCH",
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ views: (body.currentViews || 0) + 1 }),
-        });
-        return NextResponse.json({ success: updateRes.ok });
+        const { postId, currentViews } = body;
+        const { error } = await supabase
+          .from("posts")
+          .update({ views: (currentViews || 0) + 1 })
+          .eq("id", postId);
+
+        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ success: true }, { status: 200 });
       }
 
+      // 2. Comment Action
       if (body.action === "comment") {
-        if (!body.content || !body.content.trim()) {
-          return NextResponse.json({ error: "Empty comment" }, { status: 400 });
-        }
-        const commentRes = await fetch(`${SUPABASE_URL}/rest/v1/comments`, {
-          method: "POST",
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            post_id: body.postId,
-            content: body.content.trim(),
-          }),
-        });
-        return NextResponse.json({ success: commentRes.ok });
+        const { postId, content } = body;
+        const { data: postData, error: fetchError } = await supabase
+          .from("posts")
+          .select("comments")
+          .eq("id", postId)
+          .single();
+
+        if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
+
+        const existingComments = Array.isArray(postData.comments) ? postData.comments : [];
+        const newComment = { id: Date.now(), content };
+        const updatedComments = [...existingComments, newComment];
+
+        const { error: updateError } = await supabase
+          .from("posts")
+          .update({ comments: updatedComments })
+          .eq("id", postId);
+
+        if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+        return NextResponse.json({ success: true }, { status: 200 });
       }
     }
 
+    // 3. Post Creation with ImgBB Auto-Upload
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
-    const category = (formData.get("category") as string) || "social_news";
+    const category = formData.get("category") as string;
     const file = formData.get("file") as File | null;
 
-    if (!title || !content) {
-      return NextResponse.json({ error: "Title and content are required" }, { status: 400 });
-    }
+    let imageUrl = null;
 
-    let imageUrl = "";
     if (file && file.size > 0) {
-      if (file.size > 5 * 1024 * 1024) {
-        return NextResponse.json({ error: "File size too large" }, { status: 400 });
-      }
+      // Convert File to ArrayBuffer -> Base64 for ImgBB API
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       const base64Image = buffer.toString("base64");
-      const mimeType = file.type || "image/jpeg";
-      imageUrl = `data:${mimeType};base64,${base64Image}`;
+
+      const imgbbFormData = new URLSearchParams();
+      imgbbFormData.append("key", IMGBB_API_KEY);
+      imgbbFormData.append("image", base64Image);
+
+      const imgbbRes = await fetch(`https://api.imgbb.com/1/upload`, {
+        method: "POST",
+        body: imgbbFormData,
+      });
+
+      const imgbbData = await imgbbRes.json();
+      if (imgbbData.success) {
+        imageUrl = imgbbData.data.url; // Get direct image URL from ImgBB
+      } else {
+        return NextResponse.json({ error: "Image upload to ImgBB failed" }, { status: 500 });
+      }
     }
 
-    const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/posts`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=representation",
-      },
-      body: JSON.stringify({
-        title: title.trim(),
-        content: content.trim(),
-        category,
-        image_url: imageUrl || null,
-        views: 0,
-      }),
-    });
+    // Insert into Supabase Database (Only text/URL, zero bandwidth consumption on storage)
+    const { data, error } = await supabase
+      .from("posts")
+      .insert([{ title, content, category, image_url: imageUrl, views: 0, comments: [] }])
+      .select();
 
-    const resultData = await insertRes.json();
-    return NextResponse.json({ success: insertRes.ok, data: resultData });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Server Error" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
-}
+        }
