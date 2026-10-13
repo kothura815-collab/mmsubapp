@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Robust Iframe/Script Banner Component (အကွက်အလွတ်မဖြစ်ဘဲ ကြော်ငြာသေချာပေါက် ပေါ်စေရန်)
+// Dynamic Iframe Banner (Adcash ကင်းစင်ပြီး HilltopAds နဲ့ RichAds သီးသန့်သုံးထားသော စနစ်)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -10,7 +10,6 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
     if (!bannerRef.current) return;
     bannerRef.current.innerHTML = "";
 
-    // iframe ဖန်တီး၍ Ad script ကို iframe အတွင်း တိုက်ရိုက်ထည့်သွင်းခြင်း (Rendering သေချာစေရန်)
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
     iframe.style.height = "60px";
@@ -144,7 +143,6 @@ export default function Home() {
     }
   };
 
-  // View Counter Function (+1 View when clicked)
   const incrementPostView = async (postId: number, currentViews: number) => {
     try {
       await fetch("/api/posts", {
@@ -404,7 +402,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Iframe Banner (ကြော်ငြာအသေအချာ ပေါ်စေရန်) */}
+        {/* Dynamic Iframe Banner */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -610,4 +608,4 @@ export default function Home() {
       </button>
     </div>
   );
-            }
+}
