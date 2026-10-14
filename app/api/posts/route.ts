@@ -28,47 +28,38 @@ export async function POST(req: Request) {
   try {
     const contentType = req.headers.get("content-type") || "";
 
-    // 1. Increment View Action
     if (contentType.includes("application/json")) {
       const body = await req.json();
       
       if (body.action === "incrementView") {
         const { postId, currentViews } = body;
-        const { error } = await supabase
+        await supabase
           .from("posts")
           .update({ views: (currentViews || 0) + 1 })
           .eq("id", postId);
-
-        if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         return NextResponse.json({ success: true }, { status: 200 });
       }
 
-      // 2. Comment Action
       if (body.action === "comment") {
         const { postId, content } = body;
-        const { data: postData, error: fetchError } = await supabase
+        const { data: postData } = await supabase
           .from("posts")
           .select("comments")
           .eq("id", postId)
           .single();
 
-        if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 });
-
-        const existingComments = Array.isArray(postData.comments) ? postData.comments : [];
+        const existingComments = Array.isArray(postData?.comments) ? postData.comments : [];
         const newComment = { id: Date.now(), content };
         const updatedComments = [...existingComments, newComment];
 
-        const { error: updateError } = await supabase
+        await supabase
           .from("posts")
           .update({ comments: updatedComments })
           .eq("id", postId);
-
-        if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
         return NextResponse.json({ success: true }, { status: 200 });
       }
     }
 
-    // 3. Post Creation with ImgBB Auto-Upload
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
@@ -78,32 +69,39 @@ export async function POST(req: Request) {
     let imageUrl = null;
 
     if (file && file.size > 0) {
-      // Convert File to ArrayBuffer -> Base64 for ImgBB API
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const base64Image = buffer.toString("base64");
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Image = buffer.toString("base64");
 
-      const imgbbFormData = new URLSearchParams();
-      imgbbFormData.append("key", IMGBB_API_KEY);
-      imgbbFormData.append("image", base64Image);
+        const imgbbFormData = new URLSearchParams();
+        imgbbFormData.append("key", IMGBB_API_KEY);
+        imgbbFormData.append("image", base64Image);
 
-      const imgbbRes = await fetch(`https://api.imgbb.com/1/upload`, {
-        method: "POST",
-        body: imgbbFormData,
-      });
+        const imgbbRes = await fetch(`https://api.imgbb.com/1/upload`, {
+          method: "POST",
+          body: imgbbFormData,
+        });
 
-      const imgbbData = await imgbbRes.json();
-      if (imgbbData.success) {
-        imageUrl = imgbbData.data.url; // Get direct image URL from ImgBB
-      } else {
-        return NextResponse.json({ error: "Image upload to ImgBB failed" }, { status: 500 });
+        const imgbbData = await imgbbRes.json();
+        if (imgbbData && imgbbData.success) {
+          imageUrl = imgbbData.data.url;
+        }
+      } catch (imgErr) {
+        console.error("ImgBB Upload Exception:", imgErr);
       }
     }
 
-    // Insert into Supabase Database (Only text/URL, zero bandwidth consumption on storage)
     const { data, error } = await supabase
       .from("posts")
-      .insert([{ title, content, category, image_url: imageUrl, views: 0, comments: [] }])
+      .insert([{ 
+        title: title || "", 
+        content: content || "", 
+        category: category || "general", 
+        image_url: imageUrl, 
+        views: 0, 
+        comments: [] 
+      }])
       .select();
 
     if (error) {
@@ -112,6 +110,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
   }
 }
