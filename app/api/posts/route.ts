@@ -28,6 +28,7 @@ export async function POST(req: Request) {
   try {
     const contentType = req.headers.get("content-type") || "";
 
+    // 1. Increment View Action
     if (contentType.includes("application/json")) {
       const body = await req.json();
       
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true }, { status: 200 });
       }
 
+      // 2. Comment Action
       if (body.action === "comment") {
         const { postId, content } = body;
         const { data: postData, error: fetchError } = await supabase
@@ -66,6 +68,7 @@ export async function POST(req: Request) {
       }
     }
 
+    // 3. Post Creation with ImgBB Auto-Upload
     const formData = await req.formData();
     const title = formData.get("title") as string;
     const content = formData.get("content") as string;
@@ -74,40 +77,33 @@ export async function POST(req: Request) {
 
     let imageUrl = null;
 
-    if (file && file.size > 0 && typeof file.arrayBuffer === "function") {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const base64Image = buffer.toString("base64");
+    if (file && file.size > 0) {
+      // Convert File to ArrayBuffer -> Base64 for ImgBB API
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const base64Image = buffer.toString("base64");
 
-        const imgbbFormData = new URLSearchParams();
-        imgbbFormData.append("key", IMGBB_API_KEY);
-        imgbbFormData.append("image", base64Image);
+      const imgbbFormData = new URLSearchParams();
+      imgbbFormData.append("key", IMGBB_API_KEY);
+      imgbbFormData.append("image", base64Image);
 
-        const imgbbRes = await fetch(`https://api.imgbb.com/1/upload`, {
-          method: "POST",
-          body: imgbbFormData,
-        });
+      const imgbbRes = await fetch(`https://api.imgbb.com/1/upload`, {
+        method: "POST",
+        body: imgbbFormData,
+      });
 
-        const imgbbData = await imgbbRes.json();
-        if (imgbbData && imgbbData.success) {
-          imageUrl = imgbbData.data.url;
-        }
-      } catch (imgErr) {
-        console.error("ImgBB Upload Exception:", imgErr);
+      const imgbbData = await imgbbRes.json();
+      if (imgbbData.success) {
+        imageUrl = imgbbData.data.url; // Get direct image URL from ImgBB
+      } else {
+        return NextResponse.json({ error: "Image upload to ImgBB failed" }, { status: 500 });
       }
     }
 
+    // Insert into Supabase Database (Only text/URL, zero bandwidth consumption on storage)
     const { data, error } = await supabase
       .from("posts")
-      .insert([{ 
-        title: title || "", 
-        content: content || "", 
-        category: category || "General", 
-        image_url: imageUrl, 
-        views: 0, 
-        comments: [] 
-      }])
+      .insert([{ title, content, category, image_url: imageUrl, views: 0, comments: [] }])
       .select();
 
     if (error) {
@@ -116,6 +112,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
