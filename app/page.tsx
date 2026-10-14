@@ -1,61 +1,40 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Script from "next/script";
 
-// Multi-Network Dynamic Top Banner Component (HilltopAds + RichAds + Adsterra 300x250)
-function DynamicTopBanner({ adKey }: { adKey: string | number }) {
+// Reliable Adsterra Banner Component
+function DynamicTopBanner() {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!bannerRef.current) return;
     bannerRef.current.innerHTML = "";
 
-    const iframe = document.createElement("iframe");
-    iframe.style.width = "100%";
-    iframe.style.height = "260px";
-    iframe.style.border = "none";
-    iframe.style.overflow = "hidden";
-    iframe.scrolling = "no";
-    
-    bannerRef.current.appendChild(iframe);
+    // 1. atOptions script
+    const atScript = document.createElement("script");
+    atScript.type = "text/javascript";
+    atScript.text = `
+      atOptions = {
+        'key' : '6754e0813becc9cbc994188dc88d18de',
+        'format' : 'iframe',
+        'height' : 250,
+        'width' : 300,
+        'params' : {}
+      };
+    `;
+    bannerRef.current.appendChild(atScript);
 
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; }</style>
-          </head>
-          <body>
-            <!-- Adsterra 300x250 Banner -->
-            <script type="text/javascript">
-              atOptions = {
-                'key' : '6754e0813becc9cbc994188dc88d18de',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-              };
-            </script>
-            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
-            
-            <!-- HilltopAds Script -->
-            <script src="//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK" async></script>
-            
-            <!-- RichAds In-Page Push -->
-            <script src="https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679" async></script>
-          </body>
-        </html>
-      `);
-      doc.close();
-    }
-  }, [adKey]);
+    // 2. Adsterra invoke script
+    const invokeScript = document.createElement("script");
+    invokeScript.type = "text/javascript";
+    invokeScript.src = "https://bicea.org/22/6754e0813becc9cbc994188dc88d18de";
+    bannerRef.current.appendChild(invokeScript);
+  }, []);
 
   return (
     <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
-      <div ref={bannerRef} />
+      <div ref={bannerRef} style={{ display: "inline-block" }} />
     </div>
   );
 }
@@ -73,21 +52,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // Post Ad State (0/3)
   const [postAdCount, setPostAdCount] = useState(0);
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Main Ads Section (0/15)
   const [adCount, setAdCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(10);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [lockRemainingTime, setLockRemainingTime] = useState("");
 
-  // Adult Novel Read More Logic
   const [adultReadMoreState, setAdultReadMoreState] = useState<{ [key: number]: { isUnlocked: boolean; isProcessing: boolean; countdown: number } }>({});
-
   const [earnedPoints, setEarnedPoints] = useState(0);
   const [expandedPosts, setExpandedPosts] = useState<{ [key: number]: boolean }>({});
   const [showComments, setShowComments] = useState<{ [key: number]: boolean }>({});
@@ -96,7 +71,6 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct / Smart Links
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
@@ -162,7 +136,6 @@ export default function Home() {
     }
   };
 
-  // View Increment (+1 View on Interaction)
   const incrementPostView = async (postId: number, currentViews: number) => {
     try {
       await fetch("/api/posts", {
@@ -176,13 +149,11 @@ export default function Home() {
     }
   };
 
-  // Post Task (0/3): HilltopAds & Adsterra Smartlink
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
-    // Rotate between HilltopAds and Adsterra
     const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -199,14 +170,12 @@ export default function Home() {
     }, 1000);
   };
 
-  // Points Task (0/15): Adsterra Smartlink (Adult)
   const handleWatchMainAd = () => {
     if (lockUntil || isProcessingAd || adCount >= 15) return;
 
     setIsProcessingAd(true);
     setAdCountdown(10);
     
-    // Rotate Adsterra Links
     const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
     window.open(targetLink, "_blank");
 
@@ -233,7 +202,6 @@ export default function Home() {
     }, 1000);
   };
 
-  // Read More Gate: HilltopAds & Adsterra Adult Smartlink
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
     incrementPostView(postId, currentViews);
 
@@ -242,7 +210,6 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
-    // Randomize/Rotate between HilltopAds and Adsterra Adult
     const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -397,6 +364,9 @@ export default function Home() {
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
       <div ref={topRef}></div>
 
+      {/* Global Popunder / Direct link script */}
+      <Script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f" strategy="lazyOnload" />
+
       {showToast && (
         <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", background: "rgba(0,0,0,0.85)", color: "#fff", padding: "15px 30px", borderRadius: "10px", fontWeight: "bold", fontSize: "18px", zIndex: 1000, boxShadow: "0 4px 15px rgba(0,0,0,0.3)" }}>
           🎉 Points +1
@@ -433,8 +403,8 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Multi-Network Dynamic Top Banner */}
-        <DynamicTopBanner adKey={activeCategory || 'home'} />
+        {/* Dynamic Top Banner */}
+        <DynamicTopBanner />
 
         {/* Post Form */}
         {activeCategory === "post" && (
@@ -474,7 +444,7 @@ export default function Home() {
           </form>
         )}
 
-        {/* Ads Section (0/15 & 4 Hours Rotation) */}
+        {/* Ads Section */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
             <h2 style={{ marginBottom: "10px", fontSize: "18px" }}>📢 Ads 4နာရီတစ်ကြိမ် ကြည့်ရင်း ပွိုင့်စုကြမယ်</h2>
@@ -554,7 +524,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Adult Novel Content Handling with Read More Ad Gate & +1 View */}
                     {isAdultPost ? (
                       <div style={{ marginTop: "8px" }}>
                         {adultState.isUnlocked ? (
@@ -600,7 +569,6 @@ export default function Home() {
                       </button>
                     </div>
 
-                    {/* Clean Comments Section (NO Ads inside) */}
                     {isCommentsOpen && (
                       <div style={{ marginTop: "8px" }}>
                         {post.comments && post.comments.length > 0 ? (
@@ -633,7 +601,6 @@ export default function Home() {
 
       </div>
 
-      {/* Top Button with Full Auto-Collapse */}
       <button onClick={scrollToTopAndCollapse} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
         ▲ Top
       </button>
