@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Multi-Network Dynamic Top Banner Component (HilltopAds + RichAds + Adsterra 300x250)
+// Dynamic Banner Component (Fixed Height & Responsive Display)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "260px";
+    iframe.style.height = "270px";
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -26,7 +26,9 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; }</style>
+            <style>
+              body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; justify-content: center; align-items: center; min-height: 250px; }
+            </style>
           </head>
           <body>
             <!-- Adsterra 300x250 Banner -->
@@ -54,8 +56,8 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
-      <div ref={bannerRef} />
+    <div style={{ background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
+      <div ref={bannerRef} style={{ width: "100%" }} />
     </div>
   );
 }
@@ -96,7 +98,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct / Smart Links
+  // Direct Links
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
@@ -162,7 +164,6 @@ export default function Home() {
     }
   };
 
-  // View Increment (+1 View on Interaction)
   const incrementPostView = async (postId: number, currentViews: number) => {
     try {
       await fetch("/api/posts", {
@@ -176,13 +177,12 @@ export default function Home() {
     }
   };
 
-  // Post Task (0/3): HilltopAds & Adsterra Smartlink
+  // Watch Ad for Post Task (0/3)
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
-    // Rotate between HilltopAds and Adsterra
     const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -199,14 +199,13 @@ export default function Home() {
     }, 1000);
   };
 
-  // Points Task (0/15): Adsterra Smartlink (Adult)
+  // Watch Ad for Points (0/15)
   const handleWatchMainAd = () => {
     if (lockUntil || isProcessingAd || adCount >= 15) return;
 
     setIsProcessingAd(true);
     setAdCountdown(10);
     
-    // Rotate Adsterra Links
     const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
     window.open(targetLink, "_blank");
 
@@ -233,7 +232,7 @@ export default function Home() {
     }, 1000);
   };
 
-  // Read More Gate: HilltopAds & Adsterra Adult Smartlink
+  // Adult Novel Read More Logic
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
     incrementPostView(postId, currentViews);
 
@@ -242,7 +241,6 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
-    // Randomize/Rotate between HilltopAds and Adsterra Adult
     const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -265,19 +263,30 @@ export default function Home() {
     }, 1000);
   };
 
+  // Fixed Form Submit Logic
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (postAdCount < 3) return;
+    if (postAdCount < 3) {
+      alert("ကျေးဇူးပြု၍ Ads (3) ကြိမ် အရင်ကြည့်ပါရန်။");
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append("title", title);
-      formData.append("content", content);
+      formData.append("title", title.trim());
+      formData.append("content", content.trim());
       formData.append("category", category);
-      if (file) formData.append("file", file);
+      if (file) {
+        formData.append("file", file);
+      }
 
-      const res = await fetch("/api/posts", { method: "POST", body: formData });
+      const res = await fetch("/api/posts", {
+        method: "POST",
+        body: formData,
+      });
+
       if (res.ok) {
         setTitle("");
         setContent("");
@@ -290,11 +299,17 @@ export default function Home() {
 
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
+        
+        // Go back to feed view
         setActiveCategory(null);
         setActiveCategoryLabel("");
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`Post တင်၍ မရပါ: ${errData.message || "Server Error"}`);
       }
     } catch (err) {
       console.error("Submit Error:", err);
+      alert("ကွန်ရက် အခက်အခဲကြောင့် Post တင်၍ မရပါ။ ပြန်လည် ကြိုးစားကြည့်ပါ။");
     } finally {
       setLoading(false);
     }
@@ -433,7 +448,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Multi-Network Dynamic Top Banner */}
+        {/* Dynamic Top Banner */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -468,6 +483,7 @@ export default function Home() {
             <input type="text" placeholder="ခေါင်းစဉ်" value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }} />
             <textarea placeholder="အကြောင်းအရာ ရေးသားရန်..." value={content} onChange={(e) => setContent(e.target.value)} required rows={4} style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }} />
             <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} style={{ marginBottom: "12px", width: "100%" }} />
+            
             <button type="submit" disabled={loading || postAdCount < 3} style={{ width: "100%", padding: "12px", backgroundColor: postAdCount < 3 ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: postAdCount < 3 ? "not-allowed" : "pointer" }}>
               {loading ? "တင်နေသည်..." : postAdCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည်"}
             </button>
@@ -554,7 +570,7 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Adult Novel Content Handling with Read More Ad Gate & +1 View */}
+                    {/* Adult Novel Content Handling */}
                     {isAdultPost ? (
                       <div style={{ marginTop: "8px" }}>
                         {adultState.isUnlocked ? (
@@ -600,7 +616,7 @@ export default function Home() {
                       </button>
                     </div>
 
-                    {/* Clean Comments Section (NO Ads inside) */}
+                    {/* Clean Comments Section */}
                     {isCommentsOpen && (
                       <div style={{ marginTop: "8px" }}>
                         {post.comments && post.comments.length > 0 ? (
@@ -639,4 +655,4 @@ export default function Home() {
       </button>
     </div>
   );
-          }
+}
