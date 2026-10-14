@@ -100,15 +100,6 @@ export default function Home() {
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
-  const ADSTERRA_POPUNDER_SCRIPT = "https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f";
-
-  // Inject Adsterra Popunder Script Globally on Mount
-  useEffect(() => {
-    const popunderScript = document.createElement("script");
-    popunderScript.src = ADSTERRA_POPUNDER_SCRIPT;
-    popunderScript.setAttribute("data-cfasync", "false");
-    document.body.appendChild(popunderScript);
-  }, []);
 
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
@@ -191,6 +182,7 @@ export default function Home() {
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
+    // Rotate between HilltopAds and Adsterra
     const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -214,6 +206,7 @@ export default function Home() {
     setIsProcessingAd(true);
     setAdCountdown(10);
     
+    // Rotate Adsterra Links
     const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
     window.open(targetLink, "_blank");
 
@@ -249,6 +242,7 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
+    // Randomize/Rotate between HilltopAds and Adsterra Adult
     const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
