@@ -2,46 +2,56 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Updated Multi-Network Dynamic Top Banner Component (Fixed Banner Display)
-function DynamicTopBanner() {
+// Multi-Network Dynamic Top Banner Component (HilltopAds + RichAds + Adsterra 300x250)
+function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!bannerRef.current) return;
     bannerRef.current.innerHTML = "";
 
-    // 1. Adsterra Banner Script injection
-    const scriptAtOptions = document.createElement("script");
-    scriptAtOptions.type = "text/javascript";
-    scriptAtOptions.innerHTML = `
-      atOptions = {
-        'key' : '6754e0813becc9cbc994188dc88d18de',
-        'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
-        'params' : {}
-      };
-    `;
-    bannerRef.current.appendChild(scriptAtOptions);
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "260px";
+    iframe.style.border = "none";
+    iframe.style.overflow = "hidden";
+    iframe.scrolling = "no";
+    
+    bannerRef.current.appendChild(iframe);
 
-    const scriptBanner = document.createElement("script");
-    scriptBanner.type = "text/javascript";
-    scriptBanner.src = "https://bicea.org/22/6754e0813becc9cbc994188dc88d18de";
-    bannerRef.current.appendChild(scriptBanner);
-
-    // 2. HilltopAds Script injection
-    const scriptHilltop = document.createElement("script");
-    scriptHilltop.src = "//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK";
-    scriptHilltop.async = true;
-    bannerRef.current.appendChild(scriptHilltop);
-
-    // 3. RichAds In-Page Push injection
-    const scriptRich = document.createElement("script");
-    scriptRich.src = "https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679";
-    scriptRich.async = true;
-    bannerRef.current.appendChild(scriptRich);
-
-  }, []);
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; }</style>
+          </head>
+          <body>
+            <!-- Adsterra 300x250 Banner -->
+            <script type="text/javascript">
+              atOptions = {
+                'key' : '6754e0813becc9cbc994188dc88d18de',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
+            
+            <!-- HilltopAds Script -->
+            <script src="//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK" async></script>
+            
+            <!-- RichAds In-Page Push -->
+            <script src="https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679" async></script>
+          </body>
+        </html>
+      `);
+      doc.close();
+    }
+  }, [adKey]);
 
   return (
     <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
@@ -86,19 +96,10 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct / Smart Links & Popunder (Adsterra & HilltopAds)
+  // Direct / Smart Links
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
-  const ADSTERRA_POPUNDER_SCRIPT = "https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f";
-
-  // Inject Adsterra Popunder Script Globally on Mount
-  useEffect(() => {
-    const popunderScript = document.createElement("script");
-    popunderScript.src = ADSTERRA_POPUNDER_SCRIPT;
-    popunderScript.setAttribute("data-cfasync", "false");
-    document.body.appendChild(popunderScript);
-  }, []);
 
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
@@ -161,6 +162,7 @@ export default function Home() {
     }
   };
 
+  // View Increment (+1 View on Interaction)
   const incrementPostView = async (postId: number, currentViews: number) => {
     try {
       await fetch("/api/posts", {
@@ -174,11 +176,13 @@ export default function Home() {
     }
   };
 
+  // Post Task (0/3): HilltopAds & Adsterra Smartlink
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
+    // Rotate between HilltopAds and Adsterra
     const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -195,12 +199,14 @@ export default function Home() {
     }, 1000);
   };
 
+  // Points Task (0/15): Adsterra Smartlink (Adult)
   const handleWatchMainAd = () => {
     if (lockUntil || isProcessingAd || adCount >= 15) return;
 
     setIsProcessingAd(true);
     setAdCountdown(10);
     
+    // Rotate Adsterra Links
     const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
     window.open(targetLink, "_blank");
 
@@ -227,6 +233,7 @@ export default function Home() {
     }, 1000);
   };
 
+  // Read More Gate: HilltopAds & Adsterra Adult Smartlink
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
     incrementPostView(postId, currentViews);
 
@@ -235,6 +242,7 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
+    // Randomize/Rotate between HilltopAds and Adsterra Adult
     const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -425,8 +433,8 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Top Banner (Adsterra 300x250 + HilltopAds + RichAds) */}
-        <DynamicTopBanner />
+        {/* Multi-Network Dynamic Top Banner */}
+        <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
         {activeCategory === "post" && (
@@ -592,7 +600,7 @@ export default function Home() {
                       </button>
                     </div>
 
-                    {/* Clean Comments Section */}
+                    {/* Clean Comments Section (NO Ads inside) */}
                     {isCommentsOpen && (
                       <div style={{ marginTop: "8px" }}>
                         {post.comments && post.comments.length > 0 ? (
@@ -625,7 +633,7 @@ export default function Home() {
 
       </div>
 
-      {/* Top Button */}
+      {/* Top Button with Full Auto-Collapse */}
       <button onClick={scrollToTopAndCollapse} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
         ▲ Top
       </button>
