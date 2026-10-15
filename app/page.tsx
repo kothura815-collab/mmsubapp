@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Banner with Clickable Overlay Component
-function DynamicTopBanner({ adKey, onBannerClick }: { adKey: string | number; onBannerClick: () => void }) {
+// Multi-Banner Component (Top: Adsterra 300x250, Bottom: HilltopAds Banner)
+function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey, onBannerClick }: { adKey: string | number; on
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "260px";
+    iframe.style.height = "380px"; // Banner 2 ခုစာ ကွက်တိဆံ့အောင် Height မြှင့်ထားသည်
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -26,37 +26,53 @@ function DynamicTopBanner({ adKey, onBannerClick }: { adKey: string | number; on
         <!DOCTYPE html>
         <html>
           <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }</style>
+            <style>
+              body { 
+                margin: 0; 
+                padding: 0; 
+                text-align: center; 
+                background: transparent; 
+                display: flex; 
+                flex-direction: column; 
+                justify-content: flex-start; 
+                align-items: center; 
+                gap: 10px;
+              }
+            </style>
           </head>
           <body>
-            <!-- Adsterra 300x250 Banner -->
-            <script type="text/javascript">
-              atOptions = {
-                'key' : '6754e0813becc9cbc994188dc88d18de',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-              };
-            </script>
-            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
-            
+            <!-- 1. အပေါ် Banner: Adsterra 300x250 Banner -->
+            <div style="min-height: 250px;">
+              <script type="text/javascript">
+                atOptions = {
+                  'key' : '6754e0813becc9cbc994188dc88d18de',
+                  'format' : 'iframe',
+                  'height' : 250,
+                  'width' : 300,
+                  'params' : {}
+                };
+              </script>
+              <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
+            </div>
+
             <!-- Adsterra Additional Script -->
             <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
 
-            <!-- HilltopAds Anti-Adblock Banner Script -->
-            <script>
-              (function(ahvb){
-              var d = document,
-                  s = d.createElement('script'),
-                  l = d.currentScript || d.scripts[d.scripts.length - 1];
-              s.settings = ahvb || {};
-              s.src = "//enchanted-station.com/blX.VxsAdFGgl/0fYyWpcq/zeJmX9OueZxUslLkNPrTccn1iMCD/c/w-N/jRkptQNczrUHwuNczeAL3CMywr";
-              s.async = true;
-              s.referrerPolicy = 'no-referrer-when-downgrade';
-              l.parentNode.insertBefore(s, l);
-              })({})
-            </script>
+            <!-- 2. အောက် Banner: HilltopAds Anti-Adblock Banner -->
+            <div>
+              <script>
+                (function(ahvb){
+                var d = document,
+                    s = d.createElement('script'),
+                    l = d.currentScript || d.scripts[d.scripts.length - 1];
+                s.settings = ahvb || {};
+                s.src = "//enchanted-station.com/blX.VxsAdFGgl/0fYyWpcq/zeJmX9OueZxUslLkNPrTccn1iMCD/c/w-N/jRkptQNczrUHwuNczeAL3CMywr";
+                s.async = true;
+                s.referrerPolicy = 'no-referrer-when-downgrade';
+                l.parentNode.insertBefore(s, l);
+                })({})
+              </script>
+            </div>
           </body>
         </html>
       `);
@@ -65,13 +81,7 @@ function DynamicTopBanner({ adKey, onBannerClick }: { adKey: string | number; on
   }, [adKey]);
 
   return (
-    <div style={{ position: "relative", background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
-      {/* Banner များကို အပေါ်မှ အုပ်ပြီး နှိပ်လိုက်ပါက Link ပွင့်စေမည့် Transparent Overlay */}
-      <div 
-        onClick={onBannerClick}
-        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 10, cursor: "pointer", background: "transparent" }}
-        title="Click here"
-      />
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "390px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -116,11 +126,6 @@ export default function Home() {
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
-
-  // Banner Click Handler to open Direct/Smart Link
-  const handleBannerOverlayClick = () => {
-    window.open(ADSTERRA_MAIN_LINK, "_blank");
-  };
 
   // Banner 15s Rotation Timer
   useEffect(() => {
@@ -462,8 +467,8 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Banner with Clickable Overlay */}
-        <DynamicTopBanner adKey={bannerRotationKey} onBannerClick={handleBannerOverlayClick} />
+        {/* Isolated Banner Component */}
+        <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
         {activeCategory === "post" && (
@@ -529,7 +534,7 @@ export default function Home() {
                     {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 </div>
-                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးပါရန်...</p>}
               </div>
             )}
           </div>
@@ -633,36 +638,4 @@ export default function Home() {
                         {post.comments && post.comments.length > 0 ? (
                           <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "8px" }}>
                             {post.comments.map((c: any) => (
-                              <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f3", fontSize: "12px", color: "#333" }}>
-                                {c.content}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
-                        )}
-
-                        <div style={{ display: "flex", gap: "5px" }}>
-                          <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
-                          <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
-                            Send
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                  </div>
-                );
-              })
-            )}
-          </>
-        )}
-
-      </div>
-
-      <button onClick={scrollToTopAndCollapse} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
-        ▲ Top
-      </button>
-    </div>
-  );
-          }
+                              <div key={c.id} style={{ background: "#f8f9fa", padding: "6px 10px", borderRadius: "4px", borderLeft: "3px solid #0070f
