@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// HilltopAds & RichAds Dedicated Banner Component
+// HilltopAds နဲ့ RichAds များကို တစ်ခုပေါ်တစ်ခု ထပ်၍ပြမည့် Component
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "260px";
+    iframe.style.height = "380px"; // ကြော်ငြာများ အားလုံးပေါ်လောက်အောင် အမြင့်သတ်မှတ်ထားသည်
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -26,24 +26,50 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }</style>
+            <style>
+              body { 
+                margin: 0; 
+                padding: 0; 
+                text-align: center; 
+                background: transparent; 
+                display: flex; 
+                flex-direction: column; 
+                justify-content: center; 
+                align-items: center; 
+                gap: 8px;
+              }
+            </style>
           </head>
           <body>
-            <!-- HilltopAds Anti-Adblock Script -->
+            <!-- 1. HilltopAds Script 1 -->
             <script>
-              (function(ahvb){
+              (function(iaskk){
               var d = document,
                   s = d.createElement('script'),
                   l = d.currentScript || d.scripts[d.scripts.length - 1];
-              s.settings = ahvb || {};
-              s.src = "//enchanted-station.com/blX.VxsAdFGgl/0fYyWpcq/zeJmX9OueZxUslLkNPrTccn1iMCD/c/w-N/jRkptQNczrUHwuNczeAL3CMywr";
+              s.settings = iaskk || {};
+              s.src = "//enchanted-station.com/bzX/V.sZd/GXlx0VY/Wdc-/cetm/9XuvZJU/lDkWPjTBcs1TMyjlI-5pMiz/cOtoNszUUmyPMhjRkD0_MsQx";
               s.async = true;
               s.referrerPolicy = 'no-referrer-when-downgrade';
               l.parentNode.insertBefore(s, l);
               })({})
             </script>
 
-            <!-- RichAds In-Page Push -->
+            <!-- 2. HilltopAds Script 2 -->
+            <script>
+              (function(lhb){
+              var d = document,
+                  s = d.createElement('script'),
+                  l = d.currentScript || d.scripts[d.scripts.length - 1];
+              s.settings = lhb || {};
+              s.src = "//enchanted-station.com/byXyVSs_d.GSlg0nYKWccs/He/mG9qujZsUilxk/PkTNcI1CMfjXId5VN/T/M/t/NNzYUiytMtjXk/1hNWww";
+              s.async = true;
+              s.referrerPolicy = 'no-referrer-when-downgrade';
+              l.parentNode.insertBefore(s, l);
+              })({})
+            </script>
+
+            <!-- 3. RichAds In-Page Push -->
             <script src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679" async></script>
           </body>
         </html>
@@ -53,7 +79,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "400px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -94,10 +120,8 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // HilltopAds Direct Link သီးသန့်
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
 
-  // RichAds Popunder Script Injection on Main Page Load
   useEffect(() => {
     const richPopScript = document.createElement("script");
     richPopScript.src = "https://richinfo.co/richpartners/pops/js/richads-pu-ob.js";
@@ -114,7 +138,6 @@ export default function Home() {
     };
   }, []);
 
-  // Banner 15s Rotation Timer
   useEffect(() => {
     const bannerTimer = setInterval(() => {
       setBannerRotationKey((prev) => (typeof prev === 'number' ? prev + 1 : Date.now()));
@@ -241,7 +264,6 @@ export default function Home() {
             localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
           }
 
-          // Topup / Ads ပြီးသွားတာနဲ့ Web ကို Refresh လုပ်မည်
           window.location.reload();
           return 0;
         }
@@ -454,7 +476,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Top Banner */}
+        {/* HilltopAds & RichAds Stacked Banner Component */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -657,4 +679,4 @@ export default function Home() {
       </button>
     </div>
   );
-            }
+}
