@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Dual Banner Component (Top: Secondary Script Banner, Bottom: 300x250 Banner)
+// Adsterra Dual Banner Component (Top: Game/Loan Script Banner, Bottom: 300x250 18+ Banner)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -41,12 +41,12 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
             </style>
           </head>
           <body>
-            <!-- 1. Top Secondary Script/Banner (Game Ads) အပေါ်မှာပေါ်ရန် -->
+            <!-- 1. Top Secondary Script/Banner (Game, Loan, VPN ads တွေ အပေါ်မှာ အရင်ပေါ်ရန်) -->
             <div id="sub-banner">
               <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
             </div>
 
-            <!-- 2. Bottom Main Banner (300x250) အောက်မှာ ဆက်ပေါ်ရန် -->
+            <!-- 2. Bottom Main Banner (300x250 18+ Banner အောက်မှာ ပေါ်ရန်) -->
             <div id="main-banner">
               <script type="text/javascript">
                 atOptions = {
@@ -467,7 +467,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dual Banner Component (Top Secondary/Game, Bottom 300x250) */}
+        {/* Dual Banner Component (Top: Game Script, Bottom: 18+ Banner) */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -479,7 +479,7 @@ export default function Home() {
                 <span>Ads ကြည့်ရန် တာဝန်: <b>({postAdCount}/3)</b></span>
                 {postAdCount < 3 && (
                   <button type="button" onClick={handleWatchPostAd} disabled={isProcessingPostAd} style={{ background: "#ffc107", border: "none", padding: "6px 12px", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}>
-                    {isProcessingPostAd ? `10s စောင့်ပေးပါ....... (${postAdCountdown}s)` : "Ads ကြည့်မည်"}
+                    {isProcessingPostAd ? `Processing (${postAdCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 )}
               </div>
@@ -531,10 +531,10 @@ export default function Home() {
                     disabled={isProcessingAd || adCount >= 15} 
                     style={{ background: adCount >= 15 ? "#cbd5e0" : "#ffc107", color: adCount >= 15 ? "#718096" : "#000", border: "none", padding: "10px 18px", borderRadius: "6px", fontWeight: "bold", cursor: adCount >= 15 ? "not-allowed" : "pointer" }}
                   >
-                    {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `10s စောင့်ပေးပါ....... (${adCountdown}s)` : "Ads ကြည့်မည်"}
+                    {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 </div>
-                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10s စောင့်ပေးပါ....... ဆောင်ရွက်နေပါသည်...</p>}
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ 10s စောင့်ပါ.......</p>}
               </div>
             )}
           </div>
@@ -602,7 +602,7 @@ export default function Home() {
                             <div style={{ marginTop: "8px", background: "#fff5f5", padding: "10px", borderRadius: "6px", border: "1px solid #fed7d7" }}>
                               {adultState.isProcessing ? (
                                 <p style={{ color: "#c53030", fontSize: "13px", fontWeight: "bold", margin: 0 }}>
-                                  ⚠️ 10s စောင့်ပေးပါ....... (${adultState.countdown}s) ဖတ်ရန် ခဏစောင့်ပါ...
+                                  ⚠️ 10s စောင့်ပါ....... ({adultState.countdown}s)
                                 </p>
                               ) : (
                                 <button onClick={() => handleAdultReadMoreClick(post.id, post.views)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
@@ -670,4 +670,4 @@ export default function Home() {
       </button>
     </div>
   );
-      }
+}
