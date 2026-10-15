@@ -521,7 +521,7 @@ export default function Home() {
                     {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 </div>
-                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ads item မှာ 10s စောင့်ပေးပါ.........</p>}
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ (10s စောင့်ပေးပါ.........)</p>}
               </div>
             )}
           </div>
@@ -657,4 +657,4 @@ export default function Home() {
       </button>
     </div>
   );
-              }
+            }
