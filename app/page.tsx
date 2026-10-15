@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Dynamic Dual Banner Component (Top: Game/VPN Banner, Bottom: 300x250 18+ Banner)
+// Dynamic Dual Banner Component (Top: Game/VPN Banner, Bottom: HilltopAds Banner)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -46,33 +46,21 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
             </div>
 
-            <!-- 2. Bottom Main Banner (300x250 Banner အောက်မှာ ဆက်ပေါ်ရန်) -->
-            <div id="main-banner">
-              <script type="text/javascript">
-                atOptions = {
-                  'key' : '6754e0813becc9cbc994188dc88d18de',
-                  'format' : 'iframe',
-                  'height' : 250,
-                  'width' : 300,
-                  'params' : {}
-                };
+            <!-- 2. Bottom HilltopAds Banner နေရာတွင် အစားထိုးရန် -->
+            <div id="hilltop-banner">
+              <script>
+                (function(ahvb){
+                var d = document,
+                    s = d.createElement('script'),
+                    l = d.currentScript || d.scripts[d.scripts.length - 1];
+                s.settings = ahvb || {};
+                s.src = "//enchanted-station.com/blX.VxsAdFGgl/0fYyWpcq/zeJmX9OueZxUslLkNPrTccn1iMCD/c/w-N/jRkptQNczrUHwuNczeAL3CMywr";
+                s.async = true;
+                s.referrerPolicy = 'no-referrer-when-downgrade';
+                l.parentNode.insertBefore(s, l);
+                })({})
               </script>
-              <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
             </div>
-
-            <!-- HilltopAds Anti-Adblock Banner Script -->
-            <script>
-              (function(ahvb){
-              var d = document,
-                  s = d.createElement('script'),
-                  l = d.currentScript || d.scripts[d.scripts.length - 1];
-              s.settings = ahvb || {};
-              s.src = "//enchanted-station.com/blX.VxsAdFGgl/0fYyWpcq/zeJmX9OueZxUslLkNPrTccn1iMCD/c/w-N/jRkptQNczrUHwuNczeAL3CMywr";
-              s.async = true;
-              s.referrerPolicy = 'no-referrer-when-downgrade';
-              l.parentNode.insertBefore(s, l);
-              })({})
-            </script>
           </body>
         </html>
       `);
@@ -122,10 +110,8 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct / Smart Links
+  // HilltopAds Direct Link (Adsterra လิง်ခ်များအားလုံး ဖြုတ်ပြီး HilltopAds သီးသန့် သုံးရန်)
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
-  const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
-  const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
 
   // Banner 15s Rotation Timer
   useEffect(() => {
@@ -214,9 +200,7 @@ export default function Home() {
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
-    // 1st Click: HilltopAds Direct Link, 2nd Click: Adsterra Smartlink (arwf.org)
-    const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
-    window.open(targetLink, "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setPostAdCountdown((prev) => {
@@ -237,9 +221,7 @@ export default function Home() {
     setIsProcessingAd(true);
     setAdCountdown(10);
     
-    // Rotating between Adsterra Main (arwf.org) and Adsterra Secondary (auctionr.org)
-    const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
-    window.open(targetLink, "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setAdCountdown((prev) => {
@@ -272,9 +254,7 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
-    // Rotating HilltopAds and Adsterra Smartlink
-    const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
-    window.open(targetLink, "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setAdultReadMoreState((prev) => {
@@ -336,19 +316,11 @@ export default function Home() {
   };
 
   const handleSelectCategory = (catKey: string, label: string) => {
-    setActiveCategory(catKey);
-    setActiveCategoryLabel(label);
-    setShowMenu(false);
-    setBannerRotationKey(`${catKey}-${Date.now()}`);
-    scrollToTopAndCollapse();
+    window.location.reload();
   };
 
   const handleBackToHome = () => {
-    setActiveCategory(null);
-    setActiveCategoryLabel("");
-    setShowMenu(false);
-    setBannerRotationKey(`home-${Date.now()}`);
-    scrollToTopAndCollapse();
+    window.location.reload();
   };
 
   const scrollToTopAndCollapse = () => {
@@ -673,4 +645,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+      }
