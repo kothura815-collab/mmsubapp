@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra 300x250 Banner Component
+// Adsterra 300x250 Banner Direct Component (iframe ဖြုတ်ပြီး script တိုက်ရိုက်ထည့်ထားသည်)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -10,44 +10,31 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
     if (!bannerRef.current) return;
     bannerRef.current.innerHTML = "";
 
-    const iframe = document.createElement("iframe");
-    iframe.style.width = "100%";
-    iframe.style.height = "260px";
-    iframe.style.border = "none";
-    iframe.style.overflow = "hidden";
-    iframe.scrolling = "no";
-    
-    bannerRef.current.appendChild(iframe);
+    // atOptions script ဖန်တီးခြင်း
+    const atOptionsScript = document.createElement("script");
+    atOptionsScript.type = "text/javascript";
+    atOptionsScript.innerHTML = `
+      atOptions = {
+        'key' : '6754e0813becc9cbc994188dc88d18de',
+        'format' : 'iframe',
+        'height' : 250,
+        'width' : 300,
+        'params' : {}
+      };
+    `;
+    bannerRef.current.appendChild(atOptionsScript);
 
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (doc) {
-      doc.open();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; justify-content: center; align-items: center; min-height: 250px; }</style>
-          </head>
-          <body>
-            <script type="text/javascript">
-              atOptions = {
-                'key' : '6754e0813becc9cbc994188dc88d18de',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-              };
-            </script>
-            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
-          </body>
-        </html>
-      `);
-      doc.close();
-    }
+    // Adsterra invoke script ဖန်တီးခြင်း
+    const invokeScript = document.createElement("script");
+    invokeScript.type = "text/javascript";
+    invokeScript.src = "https://bicea.org/22/6754e0813becc9cbc994188dc88d18de";
+    invokeScript.async = true;
+    bannerRef.current.appendChild(invokeScript);
+
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
+    <div style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "center" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -420,7 +407,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Adsterra Banner */}
+        {/* Adsterra 300x250 Banner Component */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -623,4 +610,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+              }
