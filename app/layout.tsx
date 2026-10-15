@@ -17,22 +17,6 @@ export default function RootLayout({
         {/* HilltopAds Meta Tag Verification */}
         <meta name="hilltopads-site-verification" content="8f253bb9b8bac" />
 
-        {/* Adcash AutoTag Script */}
-        <Script
-          id="aclib"
-          src="//acscdn.com/script/aclib.js"
-          strategy="beforeInteractive"
-        />
-        <Script id="adcash-autotag" strategy="afterInteractive">
-          {`
-            if (typeof aclib !== 'undefined') {
-              aclib.runAutoTag({
-                zoneId: 'zwldyojie4',
-              });
-            }
-          `}
-        </Script>
-
         {/* RichAds Popunder Script */}
         <Script
           src="https://richinfo.co/richpartners/pops/js/richads-pu-ob.js"
