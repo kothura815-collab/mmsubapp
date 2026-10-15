@@ -46,7 +46,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
             </div>
 
-            <!-- 2. Bottom HilltopAds Banner နေရာတွင် အစားထိုးရန် -->
+            <!-- 2. Bottom HilltopAds Banner Script -->
             <div id="hilltop-banner">
               <script>
                 (function(ahvb){
@@ -110,7 +110,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // HilltopAds Direct Link (Adsterra လิง်ခ်များအားလုံး ဖြုတ်ပြီး HilltopAds သီးသန့် သုံးရန်)
+  // HilltopAds Direct Link (Adsterra links တွေအားလုံးကို ဖြုတ်ပြီး HilltopAds သီးသန့်သုံးရန်)
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
 
   // Banner 15s Rotation Timer
@@ -315,6 +315,7 @@ export default function Home() {
     }
   };
 
+  // Menu သို့မဟုတ် Item များကို နှိပ်လိုက်တာနဲ့ Web ကို Refresh လုပ်ပေးမည့် စနစ်
   const handleSelectCategory = (catKey: string, label: string) => {
     window.location.reload();
   };
@@ -470,7 +471,7 @@ export default function Home() {
                 { key: "novel", label: "ဝတ္ထု" },
                 { key: "adult_novel", label: "လူကြီးဝတ္ထု" },
               ].map((item) => (
-                <button type="button" key={item.key} onClick={() => setCategory(item.key)} style={{ padding: "10px", borderRadius: "8px", border: category === item.key ? "2px solid #3182ce" : "1px solid #cbd5e0", background: category === item.key ? "#ebf8ff" : "#f7fafc", color: category === item.key ? "#2b6cb0" : "#2d3748", fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}>{item.label}</button>
+                <button type="button" key={item.key} onClick={() => handleSelectCategory(item.key, item.label)} style={{ padding: "10px", borderRadius: "8px", border: category === item.key ? "2px solid #3182ce" : "1px solid #cbd5e0", background: category === item.key ? "#ebf8ff" : "#f7fafc", color: category === item.key ? "#2b6cb0" : "#2d3748", fontWeight: "bold", fontSize: "12px", cursor: "pointer" }}>{item.label}</button>
               ))}
             </div>
 
@@ -645,4 +646,4 @@ export default function Home() {
       </button>
     </div>
   );
-      }
+}
