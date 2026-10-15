@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Dual Banner Component (Top: Game/Loan Script Banner, Bottom: 300x250 18+ Banner)
+// Adsterra Dual Banner Component (Top: Game/Loan Script Banner, Bottom: 300x250 Banner)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -41,12 +41,12 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
             </style>
           </head>
           <body>
-            <!-- 1. Top Secondary Script/Banner (Game, Loan, VPN ads တွေ အပေါ်မှာ အရင်ပေါ်ရန်) -->
+            <!-- 1. Top Secondary Script/Banner (Game, Loan, VPN ads တွေ အပေါ်ဆုံးမှာ အရင်ပေါ်ရန်) -->
             <div id="sub-banner">
               <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
             </div>
 
-            <!-- 2. Bottom Main Banner (300x250 18+ Banner အောက်မှာ ပေါ်ရန်) -->
+            <!-- 2. Bottom Main Banner (300x250 Banner အောက်မှာ ဆက်ပေါ်ရန်) -->
             <div id="main-banner">
               <script type="text/javascript">
                 atOptions = {
@@ -467,7 +467,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dual Banner Component (Top: Game Script, Bottom: 18+ Banner) */}
+        {/* Dual Banner Component */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -670,4 +670,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+          }
