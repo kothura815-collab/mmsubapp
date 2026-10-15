@@ -17,7 +17,7 @@ export default function RootLayout({
         {/* HilltopAds Meta Tag Verification */}
         <meta name="hilltopads-site-verification" content="8f253bb9b8bac" />
 
-        {/* --- Adcash Integration --- */}
+        {/* Adcash AutoTag Script */}
         <Script
           id="aclib"
           src="//acscdn.com/script/aclib.js"
@@ -33,7 +33,7 @@ export default function RootLayout({
           `}
         </Script>
 
-        {/* --- RichAds Popunder Script --- */}
+        {/* RichAds Popunder Script */}
         <Script
           src="https://richinfo.co/richpartners/pops/js/richads-pu-ob.js"
           data-pubid="1021768"
@@ -41,7 +41,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
 
-        {/* --- RichAds In-Page Push Script (Updated to siteid=409679) --- */}
+        {/* RichAds In-Page Push Script */}
         <Script
           src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679"
           strategy="afterInteractive"
