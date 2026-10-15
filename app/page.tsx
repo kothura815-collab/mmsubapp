@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Dual Banner Component (Top: Game/Loan Script Banner, Bottom: 300x250 Banner)
+// Dynamic Dual Banner Component (Top: Game/VPN Banner, Bottom: 300x250 18+ Banner)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -333,19 +333,12 @@ export default function Home() {
   };
 
   const handleSelectCategory = (catKey: string, label: string) => {
-    setActiveCategory(catKey);
-    setActiveCategoryLabel(label);
-    setShowMenu(false);
-    setBannerRotationKey(`${catKey}-${Date.now()}`);
-    scrollToTopAndCollapse();
+    // Top up / Category ကို နှိပ်တာနဲ့ Web ကို Refresh လုပ်ပေးမည့် စနစ် (window.location.reload())
+    window.location.reload();
   };
 
   const handleBackToHome = () => {
-    setActiveCategory(null);
-    setActiveCategoryLabel("");
-    setShowMenu(false);
-    setBannerRotationKey(`home-${Date.now()}`);
-    scrollToTopAndCollapse();
+    window.location.reload();
   };
 
   const scrollToTopAndCollapse = () => {
@@ -670,4 +663,4 @@ export default function Home() {
       </button>
     </div>
   );
-          }
+    }
