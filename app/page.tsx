@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Dual Banner Component (Top: 300x250 Banner, Bottom: Secondary Script Banner)
+// Adsterra Banner Component (300x250 Banner ပထမ၊ ဆက်၍ Sub Banner)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +41,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
             </style>
           </head>
           <body>
-            <!-- 1. Top Banner (300x250) အကြီး -->
+            <!-- 1. Top Banner (300x250) အကြီး (Game / Adult Ads များ ပေါ်ရန်) -->
             <div id="main-banner">
               <script type="text/javascript">
                 atOptions = {
@@ -55,7 +55,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
             </div>
             
-            <!-- 2. Bottom Secondary Script/Banner အောက်မှာ ဆက်ပေါ်ရန် -->
+            <!-- 2. Bottom Secondary Script/Banner -->
             <div id="sub-banner">
               <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
             </div>
@@ -467,7 +467,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dual Banner Component (Top Large, Bottom Secondary) */}
+        {/* Dual Banner Component */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -534,7 +534,7 @@ export default function Home() {
                     {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 </div>
-                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ 10s စောင့်ပေးပါ.......</p>}
               </div>
             )}
           </div>
@@ -602,7 +602,7 @@ export default function Home() {
                             <div style={{ marginTop: "8px", background: "#fff5f5", padding: "10px", borderRadius: "6px", border: "1px solid #fed7d7" }}>
                               {adultState.isProcessing ? (
                                 <p style={{ color: "#c53030", fontSize: "13px", fontWeight: "bold", margin: 0 }}>
-                                  ⚠️ Processing ({adultState.countdown}s)... ဖတ်ရန် ခဏစောင့်ပါ...
+                                  ⚠️ 10s စောင့်ပေးပါ.......
                                 </p>
                               ) : (
                                 <button onClick={() => handleAdultReadMoreClick(post.id, post.views)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
@@ -670,4 +670,4 @@ export default function Home() {
       </button>
     </div>
   );
-                                     }
+}
