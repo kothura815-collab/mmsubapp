@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra 300x250 Banner Component with Auto-Rotation & Category Refresh
+// Adsterra Banner & HilltopAds Script Component (Clean Isolated Iframe)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -26,9 +26,10 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; justify-content: center; align-items: center; min-height: 250px; }</style>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }</style>
           </head>
           <body>
+            <!-- Adsterra 300x250 Banner -->
             <script type="text/javascript">
               atOptions = {
                 'key' : '6754e0813becc9cbc994188dc88d18de',
@@ -39,6 +40,23 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               };
             </script>
             <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
+            
+            <!-- Adsterra Additional Script -->
+            <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
+
+            <!-- HilltopAds Anti-Adblock Banner Script -->
+            <script>
+              (function(ahvb){
+              var d = document,
+                  s = d.createElement('script'),
+                  l = d.currentScript || d.scripts[d.scripts.length - 1];
+              s.settings = ahvb || {};
+              s.src = "//enchanted-station.com/blX.VxsAdFGgl/0fYyWpcq/zeJmX9OueZxUslLkNPrTccn1iMCD/c/w-N/jRkptQNczrUHwuNczeAL3CMywr";
+              s.async = true;
+              s.referrerPolicy = 'no-referrer-when-downgrade';
+              l.parentNode.insertBefore(s, l);
+              })({})
+            </script>
           </body>
         </html>
       `);
@@ -59,7 +77,6 @@ export default function Home() {
   const [activeCategoryLabel, setActiveCategoryLabel] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   
-  // Banner Auto-Rotation State (Every 15s)
   const [bannerRotationKey, setBannerRotationKey] = useState<string | number>(1);
 
   const [title, setTitle] = useState("");
@@ -89,11 +106,12 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
+  // Direct / Smart Links
+  const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
 
-  // 15 seconds Auto-Rotation for Banner
+  // Banner 15s Rotation Timer
   useEffect(() => {
     const bannerTimer = setInterval(() => {
       setBannerRotationKey((prev) => (typeof prev === 'number' ? prev + 1 : Date.now()));
@@ -302,7 +320,7 @@ export default function Home() {
     setActiveCategory(catKey);
     setActiveCategoryLabel(label);
     setShowMenu(false);
-    setBannerRotationKey(`${catKey}-${Date.now()}`); // Category ပြောင်းတိုင်း Banner အသစ်ချက်ချင်းခေါ်မည်
+    setBannerRotationKey(`${catKey}-${Date.now()}`);
     scrollToTopAndCollapse();
   };
 
@@ -433,7 +451,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Adsterra 300x250 Banner Component with Auto-Rotation */}
+        {/* Isolated Banner Component */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -636,4 +654,4 @@ export default function Home() {
       </button>
     </div>
   );
-    }
+}
