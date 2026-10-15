@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Dynamic Dual Banner Component (Top: Game/VPN Banner, Bottom: 300x250 18+ Banner)
+// Adsterra Banner & HilltopAds Script Component (Clean Isolated Iframe)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "340px";
+    iframe.style.height = "260px";
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -26,39 +26,23 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>
-              body { 
-                margin: 0; 
-                padding: 0; 
-                text-align: center; 
-                background: transparent; 
-                display: flex; 
-                flex-direction: column; 
-                justify-content: flex-start; 
-                align-items: center; 
-                gap: 10px;
-              }
-            </style>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }</style>
           </head>
           <body>
-            <!-- 1. Top Secondary Script/Banner (Game, Loan, VPN ads တွေ အပေါ်ဆုံးမှာ အရင်ပေါ်ရန်) -->
-            <div id="sub-banner">
-              <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
-            </div>
-
-            <!-- 2. Bottom Main Banner (300x250 Banner အောက်မှာ ဆက်ပေါ်ရန်) -->
-            <div id="main-banner">
-              <script type="text/javascript">
-                atOptions = {
-                  'key' : '6754e0813becc9cbc994188dc88d18de',
-                  'format' : 'iframe',
-                  'height' : 250,
-                  'width' : 300,
-                  'params' : {}
-                };
-              </script>
-              <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
-            </div>
+            <!-- Adsterra 300x250 Banner -->
+            <script type="text/javascript">
+              atOptions = {
+                'key' : '6754e0813becc9cbc994188dc88d18de',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
+            
+            <!-- Adsterra Additional Script -->
+            <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
 
             <!-- HilltopAds Anti-Adblock Banner Script -->
             <script>
@@ -81,7 +65,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "350px", overflow: "hidden" }}>
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -214,7 +198,6 @@ export default function Home() {
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
-    // 1st Click: HilltopAds Direct Link, 2nd Click: Adsterra Smartlink (arwf.org)
     const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -237,7 +220,6 @@ export default function Home() {
     setIsProcessingAd(true);
     setAdCountdown(10);
     
-    // Rotating between Adsterra Main (arwf.org) and Adsterra Secondary (auctionr.org)
     const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
     window.open(targetLink, "_blank");
 
@@ -272,7 +254,6 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
-    // Rotating HilltopAds and Adsterra Smartlink
     const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -470,7 +451,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dual Banner Component */}
+        {/* Isolated Banner Component */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -537,7 +518,7 @@ export default function Home() {
                     {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 </div>
-                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ 10s စောင့်ပါ.......</p>}
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
               </div>
             )}
           </div>
@@ -605,7 +586,7 @@ export default function Home() {
                             <div style={{ marginTop: "8px", background: "#fff5f5", padding: "10px", borderRadius: "6px", border: "1px solid #fed7d7" }}>
                               {adultState.isProcessing ? (
                                 <p style={{ color: "#c53030", fontSize: "13px", fontWeight: "bold", margin: 0 }}>
-                                  ⚠️ 10s စောင့်ပါ....... ({adultState.countdown}s)
+                                  ⚠️ Processing ({adultState.countdown}s)... ဖတ်ရန် ခဏစောင့်ပါ...
                                 </p>
                               ) : (
                                 <button onClick={() => handleAdultReadMoreClick(post.id, post.views)} style={{ background: "#e53e3e", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "5px", fontWeight: "bold", cursor: "pointer", fontSize: "13px" }}>
@@ -673,4 +654,4 @@ export default function Home() {
       </button>
     </div>
   );
-                                      }
+}
