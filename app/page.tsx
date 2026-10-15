@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Banner & HilltopAds Script Component (Clean Isolated Iframe)
-function DynamicTopBanner({ adKey }: { adKey: string | number }) {
+// Adsterra Banner with Clickable Overlay Component
+function DynamicTopBanner({ adKey, onBannerClick }: { adKey: string | number; onBannerClick: () => void }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,7 +65,13 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
+    <div style={{ position: "relative", background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
+      {/* Banner များကို အပေါ်မှ အုပ်ပြီး နှိပ်လိုက်ပါက Link ပွင့်စေမည့် Transparent Overlay */}
+      <div 
+        onClick={onBannerClick}
+        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 10, cursor: "pointer", background: "transparent" }}
+        title="Click here"
+      />
       <div ref={bannerRef} />
     </div>
   );
@@ -110,6 +116,11 @@ export default function Home() {
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
+
+  // Banner Click Handler to open Direct/Smart Link
+  const handleBannerOverlayClick = () => {
+    window.open(ADSTERRA_MAIN_LINK, "_blank");
+  };
 
   // Banner 15s Rotation Timer
   useEffect(() => {
@@ -451,8 +462,8 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Isolated Banner Component */}
-        <DynamicTopBanner adKey={bannerRotationKey} />
+        {/* Banner with Clickable Overlay */}
+        <DynamicTopBanner adKey={bannerRotationKey} onBannerClick={handleBannerOverlayClick} />
 
         {/* Post Form */}
         {activeCategory === "post" && (
@@ -654,4 +665,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+          }
