@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// HilltopAds နဲ့ RichAds Banners များကို နေရာလပ်မကျန်စေဘဲ အနေတော် ချုံ့ထားသော Component
+// HilltopAds နဲ့ RichAds Banners များကို သန့်ရှင်းသော ပုံစံဖြင့် အမြဲတမ်း အုပ်ပေးထားမည့် Component
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "260px"; // နေရာလပ် မကျန်စေရန် အမြင့်ကို အနေတော် ချုံ့ထားသည်
+    iframe.style.height = "260px";
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -31,12 +31,14 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
                 margin: 0; 
                 padding: 0; 
                 text-align: center; 
-                background: #fff; 
+                background: #f8f9fa; 
                 display: flex; 
                 flex-direction: column; 
                 justify-content: center; 
                 align-items: center; 
                 overflow: hidden;
+                position: relative;
+                height: 260px;
               }
               .overlay-banner {
                 position: absolute;
@@ -44,21 +46,23 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: #f8f9fa;
+                background: linear-gradient(135deg, #1a202c, #2b6cb0);
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
-                z-index: 10;
+                z-index: 999;
                 border-radius: 8px;
+                color: #fff;
+                font-family: sans-serif;
               }
             </style>
           </head>
           <body>
-            <!-- သန့်ရှင်းသော ပုံစံဖြင့် 18+ ကို ဖုံးကွယ်ရန် Overlay (Impression ဆက်လက်ဝင်မည်) -->
-            <div class="overlay-banner" id="bannerOverlay">
-              <h3 style="margin: 0 0 5px 0; color: #2b6cb0; font-family: sans-serif; font-size: 15px;">🌟 MM Sub App Official</h3>
-              <p style="margin: 0; color: #4a5568; font-family: sans-serif; font-size: 12px;">ကျေးဇူးပြု၍ ခဏစောင့်ပါ...</p>
+            <!-- 18+ ကို အမြဲတမ်း ဆက်တိုက် ဖုံးအုပ်ပေးမည့် သန့်ရှင်းသော Cover -->
+            <div class="overlay-banner">
+              <h2 style="margin: 0 0 8px 0; font-size: 18px; color: #ffc107;">🌟 MM Sub App Official 🌟</h2>
+              <p style="margin: 0; font-size: 13px; color: #e2e8f0;">Community & Entertainment Platform</p>
             </div>
 
             <!-- HilltopAds Script 1 -->
@@ -91,14 +95,6 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
             <!-- RichAds In-Page Push -->
             <script src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679" async></script>
-
-            <script>
-              // 3 စက္ကန့်ကြာပြီးနောက် Overlay ကို ဖယ်ရှားပေးခြင်း (Impression ဝင်ပြီးနောက် ကြော်ငြာပေါ်လာစေရန်)
-              setTimeout(function() {
-                var overlay = document.getElementById('bannerOverlay');
-                if(overlay) { overlay.style.display = 'none'; }
-              }, 3000);
-            </script>
           </body>
         </html>
       `);
@@ -150,7 +146,6 @@ export default function Home() {
 
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
 
-  // RichAds Popunder Script Injection & Additional In-Page Push Injection
   useEffect(() => {
     const richPopScript = document.createElement("script");
     richPopScript.src = "https://richinfo.co/richpartners/pops/js/richads-pu-ob.js";
@@ -160,7 +155,6 @@ export default function Home() {
     richPopScript.setAttribute("data-cfasync", "false");
     document.body.appendChild(richPopScript);
 
-    // Global RichAds In-Page Push Injection to ensure it renders
     const richInPageScript = document.createElement("script");
     richInPageScript.src = "https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679";
     richInPageScript.async = true;
@@ -514,7 +508,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Optimized Compact Banner Component */}
+        {/* Dynamic Top Banner */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -717,4 +711,4 @@ export default function Home() {
       </button>
     </div>
   );
-    }
+            }
