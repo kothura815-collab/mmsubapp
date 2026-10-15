@@ -214,6 +214,7 @@ export default function Home() {
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
+    // 1st Click: HilltopAds Direct Link, 2nd Click: Adsterra Smartlink (arwf.org)
     const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -236,6 +237,7 @@ export default function Home() {
     setIsProcessingAd(true);
     setAdCountdown(10);
     
+    // Rotating between Adsterra Main (arwf.org) and Adsterra Secondary (auctionr.org)
     const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
     window.open(targetLink, "_blank");
 
@@ -270,6 +272,7 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
+    // Rotating HilltopAds and Adsterra Smartlink
     const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
     window.open(targetLink, "_blank");
 
@@ -333,12 +336,19 @@ export default function Home() {
   };
 
   const handleSelectCategory = (catKey: string, label: string) => {
-    // Top up / Category ကို နှိပ်တာနဲ့ Web ကို Refresh လုပ်ပေးမည့် စနစ် (window.location.reload())
-    window.location.reload();
+    setActiveCategory(catKey);
+    setActiveCategoryLabel(label);
+    setShowMenu(false);
+    setBannerRotationKey(`${catKey}-${Date.now()}`);
+    scrollToTopAndCollapse();
   };
 
   const handleBackToHome = () => {
-    window.location.reload();
+    setActiveCategory(null);
+    setActiveCategoryLabel("");
+    setShowMenu(false);
+    setBannerRotationKey(`home-${Date.now()}`);
+    scrollToTopAndCollapse();
   };
 
   const scrollToTopAndCollapse = () => {
@@ -663,4 +673,4 @@ export default function Home() {
       </button>
     </div>
   );
-    }
+}
