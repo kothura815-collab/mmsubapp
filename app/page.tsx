@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra 300x250 Banner Direct Component (iframe ဖြုတ်ပြီး script တိုက်ရိုက်ထည့်ထားသည်)
+// Adsterra 300x250 Banner Component with Auto-Rotation & Category Refresh
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -10,31 +10,44 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
     if (!bannerRef.current) return;
     bannerRef.current.innerHTML = "";
 
-    // atOptions script ဖန်တီးခြင်း
-    const atOptionsScript = document.createElement("script");
-    atOptionsScript.type = "text/javascript";
-    atOptionsScript.innerHTML = `
-      atOptions = {
-        'key' : '6754e0813becc9cbc994188dc88d18de',
-        'format' : 'iframe',
-        'height' : 250,
-        'width' : 300,
-        'params' : {}
-      };
-    `;
-    bannerRef.current.appendChild(atOptionsScript);
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "260px";
+    iframe.style.border = "none";
+    iframe.style.overflow = "hidden";
+    iframe.scrolling = "no";
+    
+    bannerRef.current.appendChild(iframe);
 
-    // Adsterra invoke script ဖန်တီးခြင်း
-    const invokeScript = document.createElement("script");
-    invokeScript.type = "text/javascript";
-    invokeScript.src = "https://bicea.org/22/6754e0813becc9cbc994188dc88d18de";
-    invokeScript.async = true;
-    bannerRef.current.appendChild(invokeScript);
-
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; justify-content: center; align-items: center; min-height: 250px; }</style>
+          </head>
+          <body>
+            <script type="text/javascript">
+              atOptions = {
+                'key' : '6754e0813becc9cbc994188dc88d18de',
+                'format' : 'iframe',
+                'height' : 250,
+                'width' : 300,
+                'params' : {}
+              };
+            </script>
+            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
+          </body>
+        </html>
+      `);
+      doc.close();
+    }
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "10px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -46,6 +59,9 @@ export default function Home() {
   const [activeCategoryLabel, setActiveCategoryLabel] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   
+  // Banner Auto-Rotation State (Every 15s)
+  const [bannerRotationKey, setBannerRotationKey] = useState<string | number>(1);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("social_news");
@@ -76,6 +92,14 @@ export default function Home() {
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
+
+  // 15 seconds Auto-Rotation for Banner
+  useEffect(() => {
+    const bannerTimer = setInterval(() => {
+      setBannerRotationKey((prev) => (typeof prev === 'number' ? prev + 1 : Date.now()));
+    }, 15000);
+    return () => clearInterval(bannerTimer);
+  }, []);
 
   useEffect(() => {
     const savedPoints = localStorage.getItem("mm_sub_app_points");
@@ -278,6 +302,7 @@ export default function Home() {
     setActiveCategory(catKey);
     setActiveCategoryLabel(label);
     setShowMenu(false);
+    setBannerRotationKey(`${catKey}-${Date.now()}`); // Category ပြောင်းတိုင်း Banner အသစ်ချက်ချင်းခေါ်မည်
     scrollToTopAndCollapse();
   };
 
@@ -285,6 +310,7 @@ export default function Home() {
     setActiveCategory(null);
     setActiveCategoryLabel("");
     setShowMenu(false);
+    setBannerRotationKey(`home-${Date.now()}`);
     scrollToTopAndCollapse();
   };
 
@@ -407,8 +433,8 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Adsterra 300x250 Banner Component */}
-        <DynamicTopBanner adKey={activeCategory || 'home'} />
+        {/* Adsterra 300x250 Banner Component with Auto-Rotation */}
+        <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
         {activeCategory === "post" && (
@@ -610,4 +636,4 @@ export default function Home() {
       </button>
     </div>
   );
-              }
+    }
