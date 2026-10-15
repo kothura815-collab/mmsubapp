@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Dynamic Banner Component (Fixed Height & Responsive Display)
+// Adsterra 300x250 Dedicated Banner Component
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "270px";
+    iframe.style.height = "260px";
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -26,12 +26,9 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>
-              body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; justify-content: center; align-items: center; min-height: 250px; }
-            </style>
+            <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; justify-content: center; align-items: center; min-height: 250px; }</style>
           </head>
           <body>
-            <!-- Adsterra 300x250 Banner -->
             <script type="text/javascript">
               atOptions = {
                 'key' : '6754e0813becc9cbc994188dc88d18de',
@@ -42,12 +39,6 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               };
             </script>
             <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
-            
-            <!-- HilltopAds Script -->
-            <script src="//unfoldedtrade.com/b.XMVVsBdCGrla0lYQW/cb/teEmc9juAZ/UflykQP/Thcl1bMvDkc/wmN_jBkutuNmzTUYw/N/zMAz3PMnwK" async></script>
-            
-            <!-- RichAds In-Page Push -->
-            <script src="https://richinfo.co/richpartners/inpage/ra_inpage.js?siteid=409679" async></script>
           </body>
         </html>
       `);
@@ -56,8 +47,8 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", display: "flex", justifyContent: "center", alignItems: "center", overflow: "hidden" }}>
-      <div ref={bannerRef} style={{ width: "100%" }} />
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "270px", overflow: "hidden" }}>
+      <div ref={bannerRef} />
     </div>
   );
 }
@@ -98,7 +89,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct Links
+  // Direct / Smart Links
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
@@ -177,7 +168,6 @@ export default function Home() {
     }
   };
 
-  // Watch Ad for Post Task (0/3)
   const handleWatchPostAd = () => {
     if (postAdCount >= 3) return;
     setIsProcessingPostAd(true);
@@ -199,7 +189,6 @@ export default function Home() {
     }, 1000);
   };
 
-  // Watch Ad for Points (0/15)
   const handleWatchMainAd = () => {
     if (lockUntil || isProcessingAd || adCount >= 15) return;
 
@@ -232,7 +221,6 @@ export default function Home() {
     }, 1000);
   };
 
-  // Adult Novel Read More Logic
   const handleAdultReadMoreClick = (postId: number, currentViews: number) => {
     incrementPostView(postId, currentViews);
 
@@ -263,30 +251,21 @@ export default function Home() {
     }, 1000);
   };
 
-  // Fixed Form Submit Logic
+  // Post Submit Logic with Detailed Server Error Handling
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (postAdCount < 3) {
-      alert("ကျေးဇူးပြု၍ Ads (3) ကြိမ် အရင်ကြည့်ပါရန်။");
-      return;
-    }
-    
+    if (postAdCount < 3) return;
     setLoading(true);
 
     try {
       const formData = new FormData();
-      formData.append("title", title.trim());
-      formData.append("content", content.trim());
+      formData.append("title", title);
+      formData.append("content", content);
       formData.append("category", category);
-      if (file) {
-        formData.append("file", file);
-      }
+      if (file) formData.append("file", file);
 
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        body: formData,
-      });
-
+      const res = await fetch("/api/posts", { method: "POST", body: formData });
+      
       if (res.ok) {
         setTitle("");
         setContent("");
@@ -299,17 +278,15 @@ export default function Home() {
 
         if (fileInputRef.current) fileInputRef.current.value = "";
         await fetchPosts();
-        
-        // Go back to feed view
         setActiveCategory(null);
         setActiveCategoryLabel("");
       } else {
-        const errData = await res.json().catch(() => ({}));
-        alert(`Post တင်၍ မရပါ: ${errData.message || "Server Error"}`);
+        const errorData = await res.json().catch(() => ({}));
+        alert(`Post တင်၍ မရပါ: ${errorData.error || errorData.details || "Server Error"}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Submit Error:", err);
-      alert("ကွန်ရက် အခက်အခဲကြောင့် Post တင်၍ မရပါ။ ပြန်လည် ကြိုးစားကြည့်ပါ။");
+      alert(`Network Error: ${err.message || "Server နှင့် ချိတ်ဆက်၍ မရပါ"}`);
     } finally {
       setLoading(false);
     }
@@ -448,7 +425,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Top Banner */}
+        {/* Dedicated Adsterra Banner */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -483,14 +460,13 @@ export default function Home() {
             <input type="text" placeholder="ခေါင်းစဉ်" value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }} />
             <textarea placeholder="အကြောင်းအရာ ရေးသားရန်..." value={content} onChange={(e) => setContent(e.target.value)} required rows={4} style={{ width: "100%", padding: "10px", marginBottom: "10px", borderRadius: "5px", border: "1px solid #ccc", boxSizing: "border-box" }} />
             <input ref={fileInputRef} type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} style={{ marginBottom: "12px", width: "100%" }} />
-            
             <button type="submit" disabled={loading || postAdCount < 3} style={{ width: "100%", padding: "12px", backgroundColor: postAdCount < 3 ? "#ccc" : "#0070f3", color: "white", border: "none", borderRadius: "5px", fontWeight: "bold", cursor: postAdCount < 3 ? "not-allowed" : "pointer" }}>
               {loading ? "တင်နေသည်..." : postAdCount < 3 ? "Ads (3) ခု အရင်ကြည့်ပါ" : "Post တင်မည်"}
             </button>
           </form>
         )}
 
-        {/* Ads Section (0/15 & 4 Hours Rotation) */}
+        {/* Ads Section */}
         {activeCategory === "ads" && (
           <div style={{ background: "#fff", padding: "20px", borderRadius: "10px", border: "1px solid #ddd", textAlign: "center" }}>
             <h2 style={{ marginBottom: "10px", fontSize: "18px" }}>📢 Ads 4နာရီတစ်ကြိမ် ကြည့်ရင်း ပွိုင့်စုကြမယ်</h2>
@@ -570,7 +546,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Adult Novel Content Handling */}
                     {isAdultPost ? (
                       <div style={{ marginTop: "8px" }}>
                         {adultState.isUnlocked ? (
@@ -616,7 +591,6 @@ export default function Home() {
                       </button>
                     </div>
 
-                    {/* Clean Comments Section */}
                     {isCommentsOpen && (
                       <div style={{ marginTop: "8px" }}>
                         {post.comments && post.comments.length > 0 ? (
@@ -649,10 +623,9 @@ export default function Home() {
 
       </div>
 
-      {/* Top Button with Full Auto-Collapse */}
       <button onClick={scrollToTopAndCollapse} style={{ position: "fixed", bottom: "20px", right: "20px", background: "#0070f3", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", zIndex: 99, boxShadow: "0 4px 10px rgba(0,0,0,0.2)" }}>
         ▲ Top
       </button>
     </div>
   );
-}
+    }
