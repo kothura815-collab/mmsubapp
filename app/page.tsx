@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Banner & HilltopAds Script Component (Clean Isolated Iframe)
+// HilltopAds & RichAds Dedicated Banner Component
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -29,22 +29,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
             <style>body { margin: 0; padding: 0; text-align: center; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px; }</style>
           </head>
           <body>
-            <!-- Adsterra 300x250 Banner -->
-            <script type="text/javascript">
-              atOptions = {
-                'key' : '6754e0813becc9cbc994188dc88d18de',
-                'format' : 'iframe',
-                'height' : 250,
-                'width' : 300,
-                'params' : {}
-              };
-            </script>
-            <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
-            
-            <!-- Adsterra Additional Script -->
-            <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
-
-            <!-- HilltopAds Anti-Adblock Banner Script -->
+            <!-- HilltopAds Anti-Adblock Script -->
             <script>
               (function(ahvb){
               var d = document,
@@ -57,6 +42,9 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               l.parentNode.insertBefore(s, l);
               })({})
             </script>
+
+            <!-- RichAds In-Page Push -->
+            <script src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679" async></script>
           </body>
         </html>
       `);
@@ -106,10 +94,25 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct / Smart Links
+  // HilltopAds Direct Link သီးသန့်
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
-  const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
-  const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
+
+  // RichAds Popunder Script Injection on Main Page Load
+  useEffect(() => {
+    const richPopScript = document.createElement("script");
+    richPopScript.src = "https://richinfo.co/richpartners/pops/js/richads-pu-ob.js";
+    richPopScript.setAttribute("data-pubid", "1021768");
+    richPopScript.setAttribute("data-siteid", "409677");
+    richPopScript.async = true;
+    richPopScript.setAttribute("data-cfasync", "false");
+    document.body.appendChild(richPopScript);
+
+    return () => {
+      if (richPopScript.parentNode) {
+        richPopScript.parentNode.removeChild(richPopScript);
+      }
+    };
+  }, []);
 
   // Banner 15s Rotation Timer
   useEffect(() => {
@@ -198,8 +201,7 @@ export default function Home() {
     setIsProcessingPostAd(true);
     setPostAdCountdown(10);
     
-    const targetLink = postAdCount % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
-    window.open(targetLink, "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setPostAdCountdown((prev) => {
@@ -220,8 +222,7 @@ export default function Home() {
     setIsProcessingAd(true);
     setAdCountdown(10);
     
-    const targetLink = adCount % 2 === 0 ? ADSTERRA_MAIN_LINK : ADSTERRA_SECONDARY_LINK;
-    window.open(targetLink, "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setAdCountdown((prev) => {
@@ -239,6 +240,9 @@ export default function Home() {
             setLockUntil(fourHoursLater);
             localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
           }
+
+          // Topup / Ads ပြီးသွားတာနဲ့ Web ကို Refresh လုပ်မည်
+          window.location.reload();
           return 0;
         }
         return prev - 1;
@@ -254,8 +258,7 @@ export default function Home() {
       [postId]: { isUnlocked: false, isProcessing: true, countdown: 10 },
     }));
 
-    const targetLink = postId % 2 === 0 ? HILLTOP_ADS_LINK : ADSTERRA_MAIN_LINK;
-    window.open(targetLink, "_blank");
+    window.open(HILLTOP_ADS_LINK, "_blank");
 
     const timer = setInterval(() => {
       setAdultReadMoreState((prev) => {
@@ -451,7 +454,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Isolated Banner Component */}
+        {/* Dynamic Top Banner */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -518,7 +521,7 @@ export default function Home() {
                     {adCount >= 15 ? "ပြီးပါပြီ" : isProcessingAd ? `Processing (${adCountdown}s)...` : "Ads ကြည့်မည်"}
                   </button>
                 </div>
-                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ကြော်ငြာကြည့်ရှုပြီး Back လုပ်လာပါက 10 စက္ကန့် စောင့်ဆိုင်းပေးနေပါသည်...</p>}
+                {isProcessingAd && <p style={{ color: "#856404", fontSize: "12px", margin: "5px 0 0 0", textAlign: "left" }}>⚠️ ads item မှာ 10s စောင့်ပေးပါ.........</p>}
               </div>
             )}
           </div>
@@ -654,4 +657,4 @@ export default function Home() {
       </button>
     </div>
   );
-}
+              }
