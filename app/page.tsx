@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra 300x250 Dedicated Banner Component
+// Adsterra 300x250 Banner Component
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -66,19 +66,16 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
-  // Post Ad State (0/3)
   const [postAdCount, setPostAdCount] = useState(0);
   const [isProcessingPostAd, setIsProcessingPostAd] = useState(false);
   const [postAdCountdown, setPostAdCountdown] = useState(10);
 
-  // Main Ads Section (0/15)
   const [adCount, setAdCount] = useState(0);
   const [isProcessingAd, setIsProcessingAd] = useState(false);
   const [adCountdown, setAdCountdown] = useState(10);
   const [lockUntil, setLockUntil] = useState<number | null>(null);
   const [lockRemainingTime, setLockRemainingTime] = useState("");
 
-  // Adult Novel Read More Logic
   const [adultReadMoreState, setAdultReadMoreState] = useState<{ [key: number]: { isUnlocked: boolean; isProcessing: boolean; countdown: number } }>({});
 
   const [earnedPoints, setEarnedPoints] = useState(0);
@@ -89,7 +86,6 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
-  // Direct / Smart Links
   const HILLTOP_ADS_LINK = "https://plump-plastic.com/b/3DVo0QP.3/puvob/mTVbJ/ZIDF0y3iN/TgAu3FMaDFAMxWLWT-cW1XM_Dec_wzMTDcUd";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
@@ -251,7 +247,6 @@ export default function Home() {
     }, 1000);
   };
 
-  // Post Submit Logic with Detailed Server Error Handling
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (postAdCount < 3) return;
@@ -425,7 +420,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dedicated Adsterra Banner */}
+        {/* Dynamic Adsterra Banner */}
         <DynamicTopBanner adKey={activeCategory || 'home'} />
 
         {/* Post Form */}
@@ -628,4 +623,4 @@ export default function Home() {
       </button>
     </div>
   );
-    }
+}
