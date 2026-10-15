@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// HilltopAds နဲ့ RichAds Banners များကို သန့်ရှင်းသော ပုံစံဖြင့် အမြဲတမ်း အုပ်ပေးထားမည့် Component
-function DynamicTopBanner({ adKey }: { adKey: string | number }) {
+function DynamicTopBanner({ adKey, isAdultCategory }: { adKey: string | number; isAdultCategory: boolean }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -47,7 +46,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
                 width: 100%;
                 height: 100%;
                 background: linear-gradient(135deg, #1a202c, #2b6cb0);
-                display: flex;
+                display: ${isAdultCategory ? 'none' : 'flex'};
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
@@ -59,13 +58,11 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
             </style>
           </head>
           <body>
-            <!-- 18+ ကို အမြဲတမ်း ဆက်တိုက် ဖုံးအုပ်ပေးမည့် သန့်ရှင်းသော Cover -->
             <div class="overlay-banner">
               <h2 style="margin: 0 0 8px 0; font-size: 18px; color: #ffc107;">🌟 MM Sub App Official 🌟</h2>
               <p style="margin: 0; font-size: 13px; color: #e2e8f0;">Community & Entertainment Platform</p>
             </div>
 
-            <!-- HilltopAds Script 1 -->
             <script>
               (function(iaskk){
               var d = document,
@@ -79,7 +76,6 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               })({})
             </script>
 
-            <!-- HilltopAds Script 2 -->
             <script>
               (function(lhb){
               var d = document,
@@ -93,14 +89,13 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               })({})
             </script>
 
-            <!-- RichAds In-Page Push -->
             <script src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=1021768&siteid=409679" async></script>
           </body>
         </html>
       `);
       doc.close();
     }
-  }, [adKey]);
+  }, [adKey, isAdultCategory]);
 
   return (
     <div style={{ background: "#fff", padding: "4px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "12px", textAlign: "center", height: "270px", overflow: "hidden" }}>
@@ -468,6 +463,8 @@ export default function Home() {
     ? posts 
     : posts.filter((p) => p.category === activeCategory);
 
+  const isAdultCategoryActive = activeCategory === "adult_novel";
+
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#fdfbf7", fontFamily: "sans-serif", maxWidth: "600px", margin: "0 auto", padding: "10px", boxSizing: "border-box", position: "relative" }}>
       <div ref={topRef}></div>
@@ -508,8 +505,8 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Top Banner */}
-        <DynamicTopBanner adKey={bannerRotationKey} />
+        {/* Dynamic Top Banner with conditional cover */}
+        <DynamicTopBanner adKey={bannerRotationKey} isAdultCategory={isAdultCategoryActive} />
 
         {/* Post Form */}
         {activeCategory === "post" && (
@@ -711,4 +708,4 @@ export default function Home() {
       </button>
     </div>
   );
-            }
+                               }
