@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-// Adsterra Dual Banner Component (Top: 300x250 Banner, Bottom: Secondary Script)
+// Adsterra Dual Banner Component (Top: 300x250 Banner, Bottom: Secondary Script Banner)
 function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
 
@@ -12,7 +12,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
 
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
-    iframe.style.height = "320px";
+    iframe.style.height = "340px";
     iframe.style.border = "none";
     iframe.style.overflow = "hidden";
     iframe.scrolling = "no";
@@ -34,14 +34,14 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
                 background: transparent; 
                 display: flex; 
                 flex-direction: column; 
-                justify-content: center; 
+                justify-content: flex-start; 
                 align-items: center; 
-                gap: 8px;
+                gap: 10px;
               }
             </style>
           </head>
           <body>
-            <!-- 1. Top Main Banner (300x250) - အပေါ်ဆုံးမှာ အကြီး ပေါ်မည် -->
+            <!-- 1. Top Banner (300x250) အကြီး -->
             <div id="main-banner">
               <script type="text/javascript">
                 atOptions = {
@@ -55,7 +55,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
               <script type="text/javascript" src="https://bicea.org/22/6754e0813becc9cbc994188dc88d18de"></script>
             </div>
             
-            <!-- 2. Bottom Secondary Script/Banner - အောက်မှာ ဆက်ပေါ်မည် -->
+            <!-- 2. Bottom Secondary Script/Banner အောက်မှာ ဆက်ပေါ်ရန် -->
             <div id="sub-banner">
               <script data-cfasync="false" src="https://afders.org/1/7c77a9b9f31d1e6a02b13f94cd48b93f"></script>
             </div>
@@ -81,7 +81,7 @@ function DynamicTopBanner({ adKey }: { adKey: string | number }) {
   }, [adKey]);
 
   return (
-    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "330px", overflow: "hidden" }}>
+    <div style={{ background: "#fff", padding: "6px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "15px", textAlign: "center", minHeight: "350px", overflow: "hidden" }}>
       <div ref={bannerRef} />
     </div>
   );
@@ -122,10 +122,12 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
+  // Direct / Smart Links
   const HILLTOP_ADS_LINK = "https://villainoussession.com/br3.V/0/Pv3wprvRblmhVUJAZtDw0k3BNfTTA/3pMeD/AjxMLhTmcj1/MiDkcRwpMvDoU_";
   const ADSTERRA_MAIN_LINK = "https://arwf.org/4/5d411c4a828648c1b31a27d4a7c54654";
   const ADSTERRA_SECONDARY_LINK = "https://auctionr.org/4/c3ce09abbd4bbfdcb1baf38b2709c456";
 
+  // Banner 15s Rotation Timer
   useEffect(() => {
     const bannerTimer = setInterval(() => {
       setBannerRotationKey((prev) => (typeof prev === 'number' ? prev + 1 : Date.now()));
@@ -409,15 +411,15 @@ export default function Home() {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const parts = rawDisplay.split(urlRegex);
 
-    return parts.map((post, index) => {
-      if (post.match(urlRegex)) {
+    return parts.map((part, index) => {
+      if (part.match(urlRegex)) {
         return (
-          <a key={index} href={post} target="_blank" rel="noopener noreferrer" style={{ color: "#0070f3", textDecoration: "underline", wordBreak: "break-all" }}>
-            {post}
+          <a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{ color: "#0070f3", textDecoration: "underline", wordBreak: "break-all" }}>
+            {part}
           </a>
         );
       }
-      return post;
+      return part;
     });
   };
 
@@ -465,7 +467,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dual Banner Component */}
+        {/* Dual Banner Component (Top Large, Bottom Secondary) */}
         <DynamicTopBanner adKey={bannerRotationKey} />
 
         {/* Post Form */}
@@ -645,7 +647,7 @@ export default function Home() {
                           <p style={{ fontSize: "11px", color: "#888", margin: "4px 0" }}>No comments yet...</p>
                         )}
 
-                        <div style({jø}>
+                        <div style={{ display: "flex", gap: "5px" }}>
                           <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })} style={{ flex: "1", padding: "6px", borderRadius: "4px", border: "1px solid #ccc", fontSize: "12px" }} />
                           <button onClick={() => handleCommentSubmit(post.id)} style={{ padding: "6px 10px", backgroundColor: "#0070f3", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
                             Send
@@ -668,4 +670,4 @@ export default function Home() {
       </button>
     </div>
   );
-              }
+                                     }
