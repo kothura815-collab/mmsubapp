@@ -17,6 +17,9 @@ export default function RootLayout({
         {/* HilltopAds Meta Tag Verification */}
         <meta name="hilltopads-site-verification" content="8f253bb9b8bac" />
 
+        {/* Clickadu Meta Tag Verification */}
+        <meta name="clckd" content="704ade754b180e9f38798b5b7593487e" />
+
         {/* RichAds Popunder Script */}
         <Script
           src="https://richinfo.co/richpartners/pops/js/richads-pu-ob.js"
