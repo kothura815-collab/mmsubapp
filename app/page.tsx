@@ -279,19 +279,27 @@ export default function Home() {
         if (prev <= 1) {
           clearInterval(timer);
           setIsProcessingAd(false);
-          const newCount = adCount + 1;
-          setAdCount(newCount);
-          localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
+          
+          setAdCount((prevCount) => {
+            const newCount = prevCount + 1;
+            localStorage.setItem("mm_sub_app_ad_count", newCount.toString());
 
-          if (newCount >= 15) {
-            const randomPts = Math.floor(Math.random() * 11) + 5;
-            updatePoints(earnedPoints + randomPts);
-            const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
-            setLockUntil(fourHoursLater);
-            localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
-          }
+            if (newCount >= 15) {
+              const randomPts = Math.floor(Math.random() * 11) + 5;
+              setEarnedPoints((prevPts) => {
+                const totalPts = prevPts + randomPts;
+                localStorage.setItem("mm_sub_app_points", totalPts.toString());
+                return totalPts;
+              });
 
-          window.location.reload();
+              const fourHoursLater = Date.now() + 4 * 60 * 60 * 1000;
+              setLockUntil(fourHoursLater);
+              localStorage.setItem("mm_sub_app_ad_lock_until", fourHoursLater.toString());
+            }
+
+            return newCount;
+          });
+
           return 0;
         }
         return prev - 1;
@@ -505,7 +513,7 @@ export default function Home() {
       {/* Main Container */}
       <div style={{ flex: 1, width: "100%" }}>
         
-        {/* Dynamic Top Banner with conditional cover */}
+        {/* Dynamic Top Banner */}
         <DynamicTopBanner adKey={bannerRotationKey} isAdultCategory={isAdultCategoryActive} />
 
         {/* Post Form */}
@@ -708,4 +716,4 @@ export default function Home() {
       </button>
     </div>
   );
-                               }
+}
